@@ -1,5 +1,5 @@
-Schema migration tools for PostgreSQL
-=====================================
+Schema migration tool for PostgreSQL
+====================================
 
 .. image:: https://img.shields.io/pypi/v/ipmt.svg
     :target: https://pypi.python.org/pypi/ipmt
