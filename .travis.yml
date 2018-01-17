@@ -7,8 +7,7 @@ python:
   - '3.5'
   - '3.6'
 install: pip install -r requirements_dev.txt
-script: make test
-after_success: make coverage
+script: make coverage-quiet
 deploy:
   provider: pypi
   user: inplat
