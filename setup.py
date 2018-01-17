@@ -15,7 +15,7 @@ def read(*path):
 VERSION = re.compile(r".*__version__ = '(.*?)'", re.S)\
     .match(read('ipmt', '__init__.py')).group(1)
 
-readme = read('README.md')
+readme = read('README.rst')
 
 requirements = read('requirements.txt')
 
