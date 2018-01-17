@@ -99,3 +99,12 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# pyenv python configuration file
+.python-version
+
+# IDE
+.idea
+
+# private data
+.venv
