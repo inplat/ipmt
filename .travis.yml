@@ -1,14 +1,26 @@
 language: python
+
 sudo: required
+
 services:
   - docker
+
 python:
   - '2.7'
   - '3.5'
   - '3.6'
-install: pip install -r requirements_dev.txt
-script: make coverage-quiet
-after_success: codecov
+
+install:
+  - pip install --upgrade setuptools
+  - pip install codecov
+  - pip install -r requirements_dev.txt
+
+script:
+  py.test -s -v --cov-report term --cov-report html --cov ipmt ./tests
+
+after_success:
+  codecov
+
 deploy:
   provider: pypi
   user: inplat
@@ -17,5 +29,3 @@ deploy:
     secure: LNDVL/i6jbg3NkB3NJDk5n84prKliRbzuu4J3e889GHV7vY4B23UpUDP/R5gca2OdGqpJZBDBBO2G6Fjtmts1Jl7BytoI9cWRGtxrycBfcr93XlRu2reIqmd1ntHogv3J/TvpyzcI26xqan3XydOJ1UtxJkqpXumW2Rcdi5honaMstm9ZrpTFS8Bp42PHEymhv6AHHDEB/sPCIS3ZnCAxWl2Ova6bs8AOYjPpRzX7gUIQZvSy1quxVIgLv61hQleUv9O2G6XLYijf31YKZQvpUzUktkAGbazsjtsJmQT5l2ZSS4kq6s+QI5xjlRBe+UvIoKwNn9d24yMK5FQKTRv+xBft9dBEkYPUdwvac89hLWEMWFDdMdsmaRWz2iO3uIvnLe3OI0pCraSazymEba48N9DYZ0VuWZLS7/9SmeY/oBJBHRPOn2w1MPLuE9U1YjknGWz6PnxLlvWI09W61YPDzcy5V8WG28MTJPPqMRSejhB139V4ddTRm927L6VM6H87GJWY8QPT09flVuJzPuDnxtjhMOW4g2hHFw+ZiHDafVQcAVdkVsSDvDNjXFF1pyfdIEWU3MVa8oUIKX2oi3jmvHaaeJgqmaEt8g3j8zK1eDmD5/D+617WVxFPdCdxvOlU+x/wP9mfAhVifHU3xEHvqM/2SV5UPiKgCjJwCd/GlY=
   on:
     tags: true
-    repo: inplat/ipmt
-    all_branches: true
