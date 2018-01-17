@@ -201,7 +201,10 @@ latex_elements = {
     #'pointsize': '10pt',
 
     # Additional stuff for the LaTeX preamble.
-    #'preamble': '',
+    'preamble': r'''
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+''',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
