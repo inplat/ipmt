@@ -59,7 +59,11 @@ lint: venv ## check style with flake8
 	$(VENV_BIN)/flake8 --exclude=ipmt/compat.py ipmt tests
 
 .PHONY: test
-test: venv ## run tests with tox
+test: venv lint ## run tests with tox
+		$(VENV_BIN)/pytest
+
+.PHONY: test-all
+test-all: venv ## run tests with tox
 		$(VENV_BIN)/tox
 
 .PHONY: coverage

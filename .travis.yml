@@ -8,6 +8,7 @@ python:
   - '3.6'
 install: pip install -r requirements_dev.txt
 script: make coverage-quiet
+after_success: codecov
 deploy:
   provider: pypi
   user: inplat
@@ -18,4 +19,3 @@ deploy:
     tags: true
     repo: inplat/ipmt
     all_branches: true
-    python: 3.6
