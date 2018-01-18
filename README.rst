@@ -18,6 +18,10 @@ IPMT
     :target: https://pyup.io/repos/github/inplat/ipmt/
     :alt: Updates
 
+.. image:: https://landscape.io/github/inplat/ipmt/master/landscape.svg?style=flat
+   :target: https://landscape.io/github/inplat/ipmt/master
+   :alt: Code Health
+
 Иструмент миграций СУБД PostgreSQL
 
 
