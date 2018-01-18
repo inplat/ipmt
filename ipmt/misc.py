@@ -5,7 +5,7 @@ import string
 import random
 import getpass
 import subprocess
-from ipmt.compat import urlparse, unquote
+from six.moves.urllib.parse import urlparse, unquote
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
@@ -175,11 +175,11 @@ def shell(cmd, env=None, shell=False):
     stdoutdata, stderrdata = proc.communicate()
     try:
         stdoutdata = stdoutdata.decode("UTF8")
-    except:
+    except Exception:
         stdoutdata = str(stdoutdata)
     try:
         stderrdata = stderrdata.decode("UTF8")
-    except:
+    except Exception:
         stderrdata = str(stderrdata)
     return proc.returncode, stdoutdata, stderrdata
 

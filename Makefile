@@ -60,7 +60,7 @@ lint: venv ## check style with flake8
 
 .PHONY: test
 test: venv lint ## run tests with tox
-		$(VENV_BIN)/pytest
+		$(VENV_BIN)/pytest -v -s
 
 .PHONY: test-all
 test-all: venv ## run tests with tox
