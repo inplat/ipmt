@@ -320,6 +320,23 @@
             $ IPMT_DSN=svc_ars@localhost/ars6 ipmt grant --roles user3 user4 \
             >  --exclude test.mytable test.mytable_seq -i permissions.yml
 
+    Пример yaml файла::
+
+        roles:
+          - user1
+          - user2
+        objects:
+          public:
+            user1: usage
+            user2: usage
+          public.some_table:
+            user1: select
+          ~public\..*:
+            user2: all
+        exclude:
+          ~private_schema\..*
+
+
 **dump**
     Формирует дамп схемы БД указанной версии с помощью pg_dump. В качестве
     аргумента можно передать `--pg-version` с указанием требуемой версии
