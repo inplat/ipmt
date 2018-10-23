@@ -1,6 +1,6 @@
 -r requirements.txt
 
-pytest==3.6.1
+pytest==3.9.2
 mock==2.0.0
 flake8==3.5.0
 pytest-cov==2.5.1
