@@ -2,9 +2,17 @@
 import re
 import logging
 import yaml
+from yaml import Dumper
 from collections import OrderedDict
 from functools import reduce
 from ipmt.db import Database, Transaction
+
+
+def dict_representer(dumper, data):
+    return dumper.represent_dict(data.items())
+
+
+Dumper.add_representer(OrderedDict, dict_representer)
 
 ACL_INSERT = (1 << 0)  # for relations */
 ACL_SELECT = (1 << 1)
@@ -116,7 +124,7 @@ def investigate(dsn, file, roles, exclude):
             result["objects"][obj] = obj_perms
 
     result["roles"] = sorted(result_roles)
-    yaml.dump(result, file, default_flow_style=False)
+    yaml.dump(result, file, default_flow_style=False, Dumper=Dumper)
 
 
 def make_diff(db_acl, conf):
@@ -204,6 +212,8 @@ JOIN
 WHERE
         substring(nspname, 1, 3) <> 'pg_'
         AND
+        substring(nspname, 1, 3) <> 'gp_'
+        AND
         nspname <> 'information_schema'
         AND
         relkind IN ('r', 'S', 'v', 'm', 'f')
@@ -217,6 +227,8 @@ FROM
         pg_namespace
 WHERE
         substring(nspname, 1, 3) <> 'pg_'
+        AND
+        substring(nspname, 1, 3) <> 'gp_'
         AND
         nspname <> 'information_schema'
 UNION
@@ -232,6 +244,8 @@ JOIN
         pg_namespace ON pronamespace = pg_namespace.oid
 WHERE
         substring(nspname, 1, 3) <> 'pg_'
+        AND
+        substring(nspname, 1, 3) <> 'gp_'
         AND
         nspname <> 'information_schema'
 ORDER BY nspname, relname

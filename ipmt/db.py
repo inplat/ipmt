@@ -153,6 +153,7 @@ SQL_DB_SCHEMAS = """\
 SELECT 'DROP SCHEMA IF EXISTS ' || quote_ident(nspname) || 'CASCADE;'
 FROM pg_namespace
 WHERE nspname NOT LIKE 'pg_%'
+      AND nspname NOT LIKE 'gp_%'
       AND nspname <> 'public'
       AND nspname <> 'information_schema';
 """
@@ -165,6 +166,8 @@ FROM
         pg_namespace
 WHERE
         nspname NOT LIKE 'pg_%%'
+        AND
+        nspname NOT LIKE 'gp_%%'
         AND
         nspname <> 'public'
         AND
