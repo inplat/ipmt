@@ -66,31 +66,79 @@ CREATE TABLE %s.%s(
 CREATE UNIQUE INDEX ON %s.%s((version IS NOT NULL));
 """ % (VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE)
 
+GP_SQL_VERSION_CREATE = """\
+CREATE TABLE %s.%s(
+    version text NOT NULL PRIMARY KEY,
+    history text[] NOT NULL
+);
+""" % (VERSION_SCHEMA, VERSION_TABLE)
+
 SQL_VERSION_CURRENT = """\
 SELECT version FROM %s.%s
 """ % (VERSION_SCHEMA, VERSION_TABLE)
 
+# SQL_VERSION_SET = """\
+# WITH del AS (DELETE FROM {}.{} RETURNING history)
+# INSERT INTO {}.{}(version, history)
+# SELECT %(version)s,
+#        ARRAY(SELECT UNNEST(del.history) FROM del) || ARRAY[]::text[]
+# """.format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE)
+
 SQL_VERSION_SET = """\
-WITH del AS (DELETE FROM {}.{} RETURNING history)
-INSERT INTO {}.{}(version, history)
-SELECT %(version)s,
-       ARRAY(SELECT UNNEST(del.history) FROM del) || ARRAY[]::text[]
-""".format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE)
+DO $$
+DECLARE
+    _history text[];
+BEGIN
+    SELECT INTO _history history FROM {}.{};
+    DELETE FROM {}.{};
+    INSERT INTO {}.{}(version, history)
+    VALUES (%(version)s, _history || ARRAY[]::text[]);
+END$$
+""".format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE,
+           VERSION_SCHEMA, VERSION_TABLE)
+
+# SQL_VERSION_UP = """\
+# WITH del AS (DELETE FROM {}.{} RETURNING history)
+# INSERT INTO {}.{}(version, history)
+# SELECT %(version)s,
+#        ARRAY(SELECT UNNEST(del.history) FROM del) || ARRAY[%(version)s]
+# """.format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE)
 
 SQL_VERSION_UP = """\
-WITH del AS (DELETE FROM {}.{} RETURNING history)
-INSERT INTO {}.{}(version, history)
-SELECT %(version)s,
-       ARRAY(SELECT UNNEST(del.history) FROM del) || ARRAY[%(version)s]
-""".format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE)
+DO $$
+DECLARE
+    _history text[];
+BEGIN
+    SELECT INTO _history history FROM {}.{};
+    DELETE FROM {}.{};
+    INSERT INTO {}.{}(version, history)
+    VALUES (%(version)s, _history || ARRAY[%(version)s]);
+END$$
+""".format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE,
+           VERSION_SCHEMA, VERSION_TABLE)
+
+# SQL_VERSION_DOWN = """\
+# WITH del AS (DELETE FROM {}.{} RETURNING history)
+# INSERT INTO {}.{}(version, history)
+# SELECT %(version)s,
+#        ARRAY(SELECT UNNEST(history[1:array_upper(history, 1) - 1]) FROM del)
+# WHERE %(version)s IS NOT NULL
+# """.format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE)
 
 SQL_VERSION_DOWN = """\
-WITH del AS (DELETE FROM {}.{} RETURNING history)
-INSERT INTO {}.{}(version, history)
-SELECT %(version)s,
-       ARRAY(SELECT UNNEST(history[1:array_upper(history, 1) - 1]) FROM del)
-WHERE %(version)s IS NOT NULL
-""".format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE)
+DO $$
+DECLARE
+    _history text[];
+BEGIN
+    SELECT INTO _history history FROM {}.{};
+    DELETE FROM {}.{};
+    IF %(version)s IS NOT NULL THEN
+        INSERT INTO {}.{}(version, history)
+        VALUES (%(version)s, _history[1:array_upper(_history, 1) - 1]);
+    END IF;
+END$$
+""".format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE,
+           VERSION_SCHEMA, VERSION_TABLE)
 
 SQL_OPS_INSERT = """\
 INSERT INTO {}.{}(op, old_version, new_version)
@@ -102,25 +150,35 @@ SELECT UNNEST(history) FROM {}.{}
 """.format(VERSION_SCHEMA, VERSION_TABLE)
 
 SQL_DB_SCHEMAS = """\
-SELECT format('DROP SCHEMA IF EXISTS %I CASCADE;', nspname)
+SELECT 'DROP SCHEMA IF EXISTS ' || quote_ident(nspname) || 'CASCADE;'
 FROM pg_namespace
-WHERE nspname NOT LIKE 'pg%'
+WHERE nspname NOT LIKE 'pg_%'
       AND nspname <> 'public'
       AND nspname <> 'information_schema';
 """
 
 SQL_SERCH_OBJECTS = """\
 SELECT
-        format('%%I.%%I', nspname, relname)
+        quote_ident(nspname) || '.' || quote_ident(relname)
 FROM
         pg_class,
         pg_namespace
 WHERE
+        nspname NOT LIKE 'pg_%'
+        AND
+        nspname <> 'public'
+        AND
+        nspname <> 'information_schema'
+        AND
         relnamespace = pg_namespace.oid
         AND
-        format('%%I.%%I', nspname, relname) ~ %(rel_pattern)s
+        quote_ident(nspname) || '.' || quote_ident(relname) ~ %(rel_pattern)s
         AND
         relkind = ANY(%(rel_kind)s::text[])
+"""
+
+SQL_IS_GREENPLUM = """\
+SELECT EXISTS(SELECT relname FROM pg_class WHERE relname='gp_id')
 """
 
 
@@ -136,6 +194,9 @@ class Database(object):
         self.conn.set_session(autocommit=True)
         self.cursor = self.conn.cursor()
         self._initialized = False
+
+        self.cursor.execute(SQL_IS_GREENPLUM)
+        self.is_greenplum = self.cursor.fetchone()[0]
 
     @property
     def in_transaction(self):
@@ -242,7 +303,11 @@ class Database(object):
         if not self._query_scalar_unlogged(SQL_VERSION_TABLE_EXISTS):
             logging.debug("Creating table %s.%s" % (VERSION_SCHEMA,
                                                     VERSION_TABLE))
-            self._execute_unlogged(SQL_VERSION_CREATE)
+
+            if self.is_greenplum:
+                self._execute_unlogged(GP_SQL_VERSION_CREATE)
+            else:
+                self._execute_unlogged(SQL_VERSION_CREATE)
 
     def ops_add(self, op, old_version, new_version):
         if op not in ('up', 'down'):

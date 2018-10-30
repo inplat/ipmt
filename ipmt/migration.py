@@ -20,7 +20,7 @@ from ipmt.misc import autodetect_pg_dump_path, pg_dump, repr_str_multiline
 
 ROOT_BRANCH_NAME = '0'
 NAME_PATTERN = 'a-zA-Z0-9_'
-FILE_PATTERN = '^((\d+)(?:\.([a-zA-Z0-9-]+)\.(\d+))*)#([%s]*)\.py$' % \
+FILE_PATTERN = r'^((\d+)(?:\.([a-zA-Z0-9-]+)\.(\d+))*)#([%s]*)\.py$' % \
                NAME_PATTERN
 MIGRATION_TEMPLATE = '''\
 """
@@ -318,21 +318,41 @@ class Repository(object):
                 "Target branch %s not found in repository" % branch)
         return br.rebase()
 
-    def dump(self, ver, pg_version):
-        return self._create_dump(ver, pg_version)
+    def dump(self, ver, image, version):
+        return self._create_dump(ver, image, version)
 
-    def _create_dump(self, ver, pg_version):
-        fix = self._create_docker_pg_db(version=pg_version, init_timeout=600)
+    def _create_dump(self, ver, image, version):
+        dbname = 'postgres'
+        user = 'postgres'
+        is_greenplum = 'gpdb' in image
+        if is_greenplum:
+            user = 'gpadmin'
+
+        fix = self._create_docker_pg_db(
+            image=image,
+            version=version,
+            dbname=dbname,
+            user=user,
+            init_timeout=600)
         pg, cont = next(fix)
 
         try:
             self.db = None
-            self.up(ver, ('postgres@%s:%s/postgres' % pg), False, False)
+            self.up(ver, '%s@%s/%s' % (user, ('%s:%s' % pg), dbname),
+                    False, False)
 
-            dump = cont.exec_run(['gosu', 'postgres', 'pg_dump',
-                                  '--schema-only', '--no-owner',
-                                  '--no-privileges', '--no-tablespaces',
-                                  '--no-unlogged-table-data', 'postgres'])
+            if is_greenplum:
+                dump = cont.exec_run(
+                    "bash -c '"
+                    "ln -s /opt/gpdb/lib/libpq.so.5 /usr/lib/libpq.so.5 && "
+                    "/opt/gpdb/bin/pg_dump -h 127.0.0.1 -U %s "
+                    "--schema-only --no-owner --no-privileges %s'"
+                    "" % (user, dbname))
+            else:
+                dump = cont.exec_run(['gosu', 'postgres', 'pg_dump',
+                                      '--schema-only', '--no-owner',
+                                      '--no-privileges', '--no-tablespaces',
+                                      '--no-unlogged-table-data', 'postgres'])
             return dump.decode("UTF-8")
         finally:
             try:
@@ -341,7 +361,8 @@ class Repository(object):
                 pass
 
     @staticmethod
-    def _create_docker_pg_db(version='latest', host='127.0.0.1',
+    def _create_docker_pg_db(image, version='latest', user='postgres',
+                             dbname='postgres', host='127.0.0.1',
                              init_timeout=10):
         # searching free port
         sock = socket.socket()
@@ -350,7 +371,7 @@ class Repository(object):
         sock.close()
 
         client = DockerClient(version='auto', **kwargs_from_env())
-        cont = client.containers.run('postgres:%s' % version, detach=True,
+        cont = client.containers.run('%s:%s' % (image, version), detach=True,
                                      ports={'5432/tcp': (host, port)})
         try:
             start_time = time.time()
@@ -360,8 +381,10 @@ class Repository(object):
                     raise Exception("Initialization timeout, failed to "
                                     "initialize postgresql container")
                 try:
-                    conn = psycopg2.connect('dbname=postgres user=postgres '
-                                            'host=%s port=%d' % (host, port))
+
+                    conn = psycopg2.connect('dbname=%s user=%s '
+                                            'host=%s port=%d'
+                                            '' % (dbname, user, host, port))
                 except psycopg2.OperationalError:
                     time.sleep(.10)
             conn.close()

@@ -126,7 +126,11 @@ def parse_argv(prog, options):
 
     parser_dump = subparsers.add_parser('dump')
     _add_argument_path(parser_dump)
-    parser_dump.add_argument('--pg-version', dest="pg_version", type=str,
+    parser_dump.add_argument('--docker-image', dest="docker_image",
+                             type=str,
+                             default='postgres')
+    parser_dump.add_argument('--docker-version', dest="docker_version",
+                             type=str,
                              default='latest')
     parser_dump.add_argument('--output', '-o', dest='output',
                              type=argparse.FileType(mode='w'),)
@@ -344,7 +348,7 @@ def dump(args):
     :return:
     """
     repo = ipmt.migration.Repository.load(args.path)
-    print(repo.dump(args.ver[0], args.pg_version),
+    print(repo.dump(args.ver[0], args.docker_image, args.docker_version),
           file=args.output or sys.stdout)
 
 
@@ -367,7 +371,7 @@ def main(prog=None, args=None):
     except IpmtError as e:
         print(str(e), file=sys.stderr)
         return 1
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         return 255
     return 0

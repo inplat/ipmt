@@ -80,7 +80,7 @@ def test_load_acl_excl_regex(mock_connect):
     mock_cur = mock_con.cursor.return_value
     mock_cur.fetchall.return_value = given_acl
     perm = ipmt.permissions.load_acl(
-        ipmt.permissions.get_db('test@host/test'), ["~schema1\.table.*$"],
+        ipmt.permissions.get_db('test@host/test'), [r"~schema1\.table.*$"],
         None)
     assert perm == [
         ['schema1.view1', {'usr2': [ACL_UPDATE], 'usr4': [ACL_SELECT]},

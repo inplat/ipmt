@@ -187,49 +187,50 @@ def dict_diff(dict1, dict2):
 
 
 def load_acl(db, exclude, roles):
-    sql = """
-        SELECT
-                pg_namespace.nspname::text,
-                pg_class.relname::text,
-                pg_class.relacl,
-                pg_class.relkind
-        FROM
-                pg_class
-        JOIN
-                pg_namespace ON relnamespace = pg_namespace.oid
-        WHERE
-                substring(nspname, 1, 3) <> 'pg_'
-                AND
-                nspname <> 'information_schema'
-                AND
-                relkind IN ('r', 'S', 'v', 'm', 'f')
-        UNION
-        SELECT
-                nspname,
-                NULL,
-                nspacl,
-                'n'
-        FROM
-                pg_namespace
-        WHERE
-                substring(nspname, 1, 3) <> 'pg_'
-                AND
-                nspname <> 'information_schema'
-        UNION
-        SELECT
-                nspname,
-                format('%I(%s)', proname, oidvectortypes(proargtypes)),
-                proacl,
-                'F'
-        FROM
-                pg_proc
-        JOIN
-                pg_namespace ON pronamespace = pg_namespace.oid
-        WHERE
-                substring(nspname, 1, 3) <> 'pg_'
-                AND
-                nspname <> 'information_schema'
-        ORDER BY nspname, relname
+    sql = """\
+SELECT
+        pg_namespace.nspname::text,
+        pg_class.relname::text,
+        pg_class.relacl::text[],
+        pg_class.relkind
+FROM
+        pg_class
+JOIN
+        pg_namespace ON relnamespace = pg_namespace.oid
+WHERE
+        substring(nspname, 1, 3) <> 'pg_'
+        AND
+        nspname <> 'information_schema'
+        AND
+        relkind IN ('r', 'S', 'v', 'm', 'f')
+UNION
+SELECT
+        nspname::text,
+        NULL::text,
+        nspacl::text[],
+        'n'
+FROM
+        pg_namespace
+WHERE
+        substring(nspname, 1, 3) <> 'pg_'
+        AND
+        nspname <> 'information_schema'
+UNION
+SELECT
+        nspname::text,
+        quote_ident(proname) || '('
+                             || oidvectortypes(proargtypes)::text || ')',
+        proacl::text[],
+        'F'
+FROM
+        pg_proc
+JOIN
+        pg_namespace ON pronamespace = pg_namespace.oid
+WHERE
+        substring(nspname, 1, 3) <> 'pg_'
+        AND
+        nspname <> 'information_schema'
+ORDER BY nspname, relname
         """
     result = []
     for row in db.query_all(sql):
@@ -384,7 +385,9 @@ def is_all_privileges(privileges, relkind):
 def parser_acl(acl, roles):
     result = {}
     if acl is not None:
-        for item in acl.strip('{}').split(','):
+        if not isinstance(acl, list):
+            acl = acl.strip('{}').split(',')
+        for item in acl:
             if not item:
                 continue
             role, perm = item.split('=')

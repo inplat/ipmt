@@ -339,9 +339,10 @@
 
 **dump**
     Формирует дамп схемы БД указанной версии с помощью pg_dump. В качестве
-    аргумента можно передать `--pg-version` с указанием требуемой версии
-    postgresql. Версия postgresql передается в формате docker. Список доступных
-    доступен на `docker hub`_. Версии alpine не поддерживаются.
+    аргумента можно передать `--docker-image` и `--docker-version` с
+    указанием требуемой версии postgresql или greenplum.
+    Список доступных доступен на `docker hub`_.
+    Версии alpine не поддерживаются.
     Если не указан путь к файлу для сохранения дампа, то дамп будет выведен в
     стандартный вывод.
 
@@ -349,7 +350,10 @@
 
         .. code-block:: console
 
-            $ ipmt dump -o dump.sql --pg-version 9.5
+            # postgres
+            $ ipmt dump -o dump.sql --docker-image postgres --docker-version 9.5
+            # greenplum
+            $ ipmt dump -o dump.sql --docker-image pivotaldata/gpdb-dev --docker-version ubuntu-16.04
 
 
 Транзакционность
