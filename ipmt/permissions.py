@@ -135,10 +135,12 @@ def make_diff(db_acl, conf):
                         conf['objects'][pattern],
                         obj_conf_acl or OrderedDict())
             obj_conf_acl = obj_conf_acl or OrderedDict()
-            obj_db_acl = OrderedDict([
-                ('role',
-                 [obj_acl[role]
-                  for role in obj_acl.keys() if role in conf["roles"]])])
+
+            obj_db_acl = OrderedDict()
+            for role in obj_acl.keys():
+                if role in conf["roles"]:
+                    obj_db_acl[role] = obj_acl[role]
+
             diff.append((obj, obj_kind, dict_diff(obj_db_acl, obj_conf_acl)))
     return diff
 
