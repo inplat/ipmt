@@ -2,9 +2,9 @@
 import re
 import logging
 import yaml
+from collections import OrderedDict
 from functools import reduce
 from ipmt.db import Database, Transaction
-
 
 ACL_INSERT = (1 << 0)  # for relations */
 ACL_SELECT = (1 << 1)
@@ -37,8 +37,8 @@ ACL_CONNECT_CHR = 'c'
 
 ACL_ALL_RIGHTS_COLUMN = (ACL_INSERT | ACL_SELECT | ACL_UPDATE | ACL_REFERENCES)
 ACL_ALL_RIGHTS_RELATION = (
-    ACL_INSERT | ACL_SELECT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE |
-    ACL_REFERENCES | ACL_TRIGGER)
+        ACL_INSERT | ACL_SELECT | ACL_UPDATE | ACL_DELETE | ACL_TRUNCATE |
+        ACL_REFERENCES | ACL_TRIGGER)
 ACL_ALL_RIGHTS_SEQUENCE = (ACL_USAGE | ACL_SELECT | ACL_UPDATE)
 ACL_ALL_RIGHTS_DATABASE = (ACL_CREATE | ACL_CREATE_TEMP | ACL_CONNECT)
 ACL_ALL_RIGHTS_FDW = ACL_USAGE
@@ -99,12 +99,12 @@ def update(dsn, file, roles, exclude, dry_run):
 def investigate(dsn, file, roles, exclude):
     db = get_db(dsn)
     acl = load_acl(db, exclude, roles)
-    result = {"objects": {}}
+    result = {"objects": OrderedDict()}
     if exclude:
         result["exclude"] = sorted(exclude)
     result_roles = roles or []
     for obj, obj_acl, obj_kind in acl:
-        obj_perms = {}
+        obj_perms = OrderedDict()
         for role, role_perms in obj_acl.items():
             if not roles or role in roles:
                 perms = privileges_to_short_string(role_perms, obj_kind)
@@ -132,11 +132,13 @@ def make_diff(db_acl, conf):
                     match = pattern == obj
                 if match:
                     obj_conf_acl = merge_dicts(
-                        conf['objects'][pattern], obj_conf_acl or {})
-            obj_conf_acl = obj_conf_acl or {}
-            obj_db_acl = {
-                role: obj_acl[role]
-                for role in obj_acl.keys() if role in conf["roles"]}
+                        conf['objects'][pattern],
+                        obj_conf_acl or OrderedDict())
+            obj_conf_acl = obj_conf_acl or OrderedDict()
+            obj_db_acl = OrderedDict([
+                ('role',
+                 [obj_acl[role]
+                  for role in obj_acl.keys() if role in conf["roles"]])])
             diff.append((obj, obj_kind, dict_diff(obj_db_acl, obj_conf_acl)))
     return diff
 
