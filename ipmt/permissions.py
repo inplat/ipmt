@@ -176,10 +176,10 @@ def merge_dicts(dict1, dict2):
 
 
 def dict_diff(dict1, dict2):
-    result = {}
+    result = OrderedDict()
     keys = set(list(dict1.keys()) + list(dict2.keys()))
     for role in keys:
-        result[role] = {'+': [], '-': []}
+        result[role] = OrderedDict([('+', []), ('-', [])])
         if role in dict1 and role not in dict2:
             result[role]['-'] = dict1[role]
         elif role not in dict1 and role in dict2:
