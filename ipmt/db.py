@@ -164,7 +164,7 @@ FROM
         pg_class,
         pg_namespace
 WHERE
-        nspname NOT LIKE 'pg_%'
+        nspname NOT LIKE 'pg_%%'
         AND
         nspname <> 'public'
         AND
