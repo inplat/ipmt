@@ -417,7 +417,7 @@ def parser_acl(acl, roles):
 
 
 def config_load(file, roles, exclude):
-    conf = yaml.load(file)
+    conf = yaml.safe_load(file)
     if not conf:
         logging.warning('Empty permissions config')
         return {}
