@@ -3,5 +3,5 @@ pyyaml>=4.2b1
 Jinja2==2.10.1
 Mako==1.0.7
 argparse==1.4.0
-docker==2.7.0
+docker==4.3.0
 six>=1.4.0
