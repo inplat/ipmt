@@ -51,28 +51,28 @@ ifeq ($(VENV_EXISTS), 1)
 	@echo virtual env already initialized
 else
 	virtualenv -p python3 .venv
-	$(VENV_BIN)/pip install -r requirements_dev.txt
+	poetry install
 endif
 
 .PHONY: lint
 lint: venv ## check style with flake8
-	$(VENV_BIN)/flake8 --exclude=ipmt/compat.py ipmt tests
+	poetry run flake8 --exclude=ipmt/compat.py ipmt tests
 
 .PHONY: test
 test: venv lint ## run tests with tox
-		$(VENV_BIN)/pytest -v -s
+	poetry run pytest -v -s
 
 .PHONY: test-all
 test-all: venv ## run tests with tox
-		$(VENV_BIN)/tox
+	poetry run tox
 
 .PHONY: coverage
 coverage-quiet: venv ## check code coverage
-		$(VENV_BIN)/py.test --cov-report html --cov=ipmt tests/
+	poetry run pytest --cov-report html --cov=ipmt tests/
 
 .PHONY: coverage
 coverage: coverage-quiet ## check code coverage and open report in default browser
-		$(BROWSER) htmlcov/index.html
+	$(BROWSER) htmlcov/index.html
 
 .PHONY: docs-quiet
 docs-quiet: venv ## generate Sphinx HTML documentation, including API docs
@@ -92,17 +92,15 @@ servedocs: docs ## compile the docs watching for changes
 
 .PHONY: dist
 dist: venv ## builds source and wheel package
-	$(VENV_BIN)/python setup.py sdist
-	$(VENV_BIN)/python setup.py bdist_wheel
+	poetry build
 
 .PHONY: install
 install: clean ## install the package to the active Python's site-packages
-	$(VENV_BIN)/python setup.py install
+	poetry install
 
 .PHONY: release
 release: venv lint test ## package and upload a release
-	$(VENV_BIN)/python setup.py sdist upload
-	$(VENV_BIN)/python setup.py bdist_wheel upload
+	poetry publish
 
 .PHONY: help
 help:  ## Show this help message and exit

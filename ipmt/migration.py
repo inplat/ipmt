@@ -14,9 +14,10 @@ import jinja2
 from docker.client import DockerClient
 from docker.utils import kwargs_from_env
 from ipmt.error import RepositoryError, OperationError
-from ipmt.compat import load_module_py
 from ipmt.db import Database, Transaction
-from ipmt.misc import autodetect_pg_dump_path, pg_dump, repr_str_multiline
+from ipmt.misc import autodetect_pg_dump_path, pg_dump, repr_str_multiline, \
+    load_module_py
+
 
 ROOT_BRANCH_NAME = '0'
 NAME_PATTERN = 'a-zA-Z0-9_'
@@ -342,17 +343,19 @@ class Repository(object):
                     False, False)
 
             if is_greenplum:
-                dump = cont.exec_run(
+                _, dump = cont.exec_run(
                     "bash -c '"
                     "ln -s /opt/gpdb/lib/libpq.so.5 /usr/lib/libpq.so.5 && "
                     "/opt/gpdb/bin/pg_dump -h 127.0.0.1 -U %s "
                     "--schema-only --no-owner --no-privileges %s'"
                     "" % (user, dbname))
             else:
-                dump = cont.exec_run(['gosu', 'postgres', 'pg_dump',
-                                      '--schema-only', '--no-owner',
-                                      '--no-privileges', '--no-tablespaces',
-                                      '--no-unlogged-table-data', 'postgres'])
+                _, dump = cont.exec_run([
+                    'gosu', 'postgres', 'pg_dump',
+                    '--schema-only', '--no-owner',
+                    '--no-privileges', '--no-tablespaces',
+                    '--no-unlogged-table-data', 'postgres'
+                ])
             return dump.decode("UTF-8")
         finally:
             try:
@@ -371,8 +374,11 @@ class Repository(object):
         sock.close()
 
         client = DockerClient(version='auto', **kwargs_from_env())
-        cont = client.containers.run('%s:%s' % (image, version), detach=True,
-                                     ports={'5432/tcp': (host, port)})
+        cont = client.containers.run(
+            f'{image}:{version}', detach=True,
+            ports={'5432/tcp': (host, port)},
+            environment={"POSTGRES_HOST_AUTH_METHOD": "trust"}
+        )
         try:
             start_time = time.time()
             conn = None
@@ -381,10 +387,8 @@ class Repository(object):
                     raise Exception("Initialization timeout, failed to "
                                     "initialize postgresql container")
                 try:
-
-                    conn = psycopg2.connect('dbname=%s user=%s '
-                                            'host=%s port=%d'
-                                            '' % (dbname, user, host, port))
+                    conn = psycopg2.connect(f'dbname={dbname} user={user} '
+                                            f'host={host} port={port}')
                 except psycopg2.OperationalError:
                     time.sleep(.10)
             conn.close()

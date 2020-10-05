@@ -5,7 +5,8 @@ import string
 import random
 import getpass
 import subprocess
-from six.moves.urllib.parse import urlparse, unquote
+from importlib import machinery
+from urllib.parse import urlparse, unquote
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith('win')
 
@@ -193,3 +194,8 @@ def repr_str_multiline(s):
     :rtype: str
     """
     return 'r"""\n' + s.replace('\\', '\\\\').replace('"', '\\"') + '\n"""'
+
+
+def load_module_py(module_id, path):
+    return machinery.SourceFileLoader(module_id, path).load_module(
+        module_id)

@@ -128,7 +128,7 @@ def test_investigate_base(mock_connect, tmpfile):
     # execute
     ipmt.permissions.investigate('test@host/test', tmpfile, None, None)
     tmpfile.seek(0)
-    assert yaml.load(tmpfile) == yaml.load(expected_yml)
+    assert yaml.safe_load(tmpfile) == yaml.safe_load(expected_yml)
 
 
 @patch("psycopg2.connect")
@@ -152,7 +152,7 @@ def test_investigate_with_roles(mock_connect, tmpfile):
     ipmt.permissions.investigate('test@host/test', tmpfile, ['user1'],
                                  None)
     tmpfile.seek(0)
-    assert yaml.load(tmpfile) == yaml.load(expected_yml)
+    assert yaml.safe_load(tmpfile) == yaml.safe_load(expected_yml)
 
 
 @patch("psycopg2.connect")
@@ -177,7 +177,7 @@ def test_investigate_with_excl(mock_connect, tmpfile):
     ipmt.permissions.investigate('test@host/test', tmpfile, None,
                                  ['schema1.table1'])
     tmpfile.seek(0)
-    assert yaml.load(tmpfile) == yaml.load(expected_yml)
+    assert yaml.safe_load(tmpfile) == yaml.safe_load(expected_yml)
 
 
 @patch("psycopg2.connect")
