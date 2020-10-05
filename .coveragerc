@@ -1,4 +1,0 @@
-[run]
-branch = True
-source = ipmt
-omit = site-packages, .tox
