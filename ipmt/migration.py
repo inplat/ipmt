@@ -716,7 +716,9 @@ class Version(object):
     def _search_branches(cpath, all_files):
         result = []
         for file, filename, name, vpath in all_files:
-            if cpath == vpath[0 : len(cpath)] and len(cpath) + 2 == len(vpath):
+            if cpath == vpath[0 : len(cpath)] and len(  # noqa
+                cpath
+            ) + 2 == len(vpath):
                 result.append((file, filename, name, vpath))
         return result
 
@@ -823,9 +825,9 @@ class Branch(list):
             if bpath is None:
                 if len(vpath) == 1:
                     result.append((file, filename, name, vpath))
-            elif bpath == vpath[0 : len(bpath)] and len(bpath) + 1 == len(
-                vpath
-            ):
+            elif bpath == vpath[0 : len(bpath)] and len(  # noqa
+                bpath
+            ) + 1 == len(vpath):
                 result.append((file, filename, name, vpath))
         return result
 
