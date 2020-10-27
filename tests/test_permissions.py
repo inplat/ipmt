@@ -4,12 +4,22 @@ import yaml
 from mock import patch
 import ipmt.permissions
 from ipmt.permissions import (
-    is_all_privileges, privilege_to_string,
-    ACL_INSERT, ACL_SELECT, ACL_UPDATE,
-    ACL_ALL_RIGHTS_NAMESPACE, ACL_ALL_RIGHTS_RELATION, ACL_ALL_RIGHTS_SEQUENCE,
+    is_all_privileges,
+    privilege_to_string,
+    ACL_INSERT,
+    ACL_SELECT,
+    ACL_UPDATE,
+    ACL_ALL_RIGHTS_NAMESPACE,
+    ACL_ALL_RIGHTS_RELATION,
+    ACL_ALL_RIGHTS_SEQUENCE,
     ACL_ALL_RIGHTS_FUNCTION,
-    RELKIND_NAMESPACE, RELKIND_TABLE, RELKIND_VIEW, RELKIND_MATVIEW,
-    RELKIND_FOREIGN_TABLE, RELKIND_SEQUENCE, RELKIND_FUNCTION
+    RELKIND_NAMESPACE,
+    RELKIND_TABLE,
+    RELKIND_VIEW,
+    RELKIND_MATVIEW,
+    RELKIND_FOREIGN_TABLE,
+    RELKIND_SEQUENCE,
+    RELKIND_FUNCTION,
 )
 
 
@@ -44,11 +54,15 @@ def test_load_acl_base(mock_connect):
     mock_cur = mock_con.cursor.return_value
     mock_cur.fetchall.return_value = given_acl
     perm = ipmt.permissions.load_acl(
-        ipmt.permissions.get_db('test@host/test'), None, None)
+        ipmt.permissions.get_db("test@host/test"), None, None
+    )
     assert perm == [
-        ['schema1.table1', {'usr1': [ACL_SELECT]}, RELKIND_TABLE],
-        ['schema1.view1', {'usr2': [ACL_UPDATE], 'usr4': [ACL_SELECT]},
-         RELKIND_VIEW],
+        ["schema1.table1", {"usr1": [ACL_SELECT]}, RELKIND_TABLE],
+        [
+            "schema1.view1",
+            {"usr2": [ACL_UPDATE], "usr4": [ACL_SELECT]},
+            RELKIND_VIEW,
+        ],
     ]
 
 
@@ -62,11 +76,14 @@ def test_load_acl_with_excl(mock_connect):
     mock_cur = mock_con.cursor.return_value
     mock_cur.fetchall.return_value = given_acl
     perm = ipmt.permissions.load_acl(
-        ipmt.permissions.get_db('test@host/test'), ["schema1.table1"],
-        None)
+        ipmt.permissions.get_db("test@host/test"), ["schema1.table1"], None
+    )
     assert perm == [
-        ['schema1.view1', {'usr2': [ACL_UPDATE], 'usr4': [ACL_SELECT]},
-         RELKIND_VIEW],
+        [
+            "schema1.view1",
+            {"usr2": [ACL_UPDATE], "usr4": [ACL_SELECT]},
+            RELKIND_VIEW,
+        ],
     ]
 
 
@@ -80,11 +97,16 @@ def test_load_acl_excl_regex(mock_connect):
     mock_cur = mock_con.cursor.return_value
     mock_cur.fetchall.return_value = given_acl
     perm = ipmt.permissions.load_acl(
-        ipmt.permissions.get_db('test@host/test'), [r"~schema1\.table.*$"],
-        None)
+        ipmt.permissions.get_db("test@host/test"),
+        [r"~schema1\.table.*$"],
+        None,
+    )
     assert perm == [
-        ['schema1.view1', {'usr2': [ACL_UPDATE], 'usr4': [ACL_SELECT]},
-         RELKIND_VIEW],
+        [
+            "schema1.view1",
+            {"usr2": [ACL_UPDATE], "usr4": [ACL_SELECT]},
+            RELKIND_VIEW,
+        ],
     ]
 
 
@@ -98,10 +120,11 @@ def test_load_acl_with_roles(mock_connect):
     mock_cur = mock_con.cursor.return_value
     mock_cur.fetchall.return_value = given_acl
     perm = ipmt.permissions.load_acl(
-        ipmt.permissions.get_db('test@host/test'), None, ["usr1"])
+        ipmt.permissions.get_db("test@host/test"), None, ["usr1"]
+    )
     assert perm == [
-        ['schema1.table1', {'usr1': [ACL_SELECT]}, RELKIND_TABLE],
-        ['schema1.view1', {}, RELKIND_VIEW],
+        ["schema1.table1", {"usr1": [ACL_SELECT]}, RELKIND_TABLE],
+        ["schema1.view1", {}, RELKIND_VIEW],
     ]
 
 
@@ -111,7 +134,7 @@ def test_investigate_base(mock_connect, tmpfile):
         ("schema1", "table1", "{user1=rwa/user1}", RELKIND_TABLE),
         ("schema2", "table2", "{user2=r/user2}", RELKIND_TABLE),
     ]
-    expected_yml = u"""\
+    expected_yml = """\
         objects:
           schema1.table1:
             user1: select, update, insert
@@ -126,7 +149,7 @@ def test_investigate_base(mock_connect, tmpfile):
     mock_cur = mock_con.cursor.return_value
     mock_cur.fetchall.return_value = given_acl
     # execute
-    ipmt.permissions.investigate('test@host/test', tmpfile, None, None)
+    ipmt.permissions.investigate("test@host/test", tmpfile, None, None)
     tmpfile.seek(0)
     assert yaml.safe_load(tmpfile) == yaml.safe_load(expected_yml)
 
@@ -137,7 +160,7 @@ def test_investigate_with_roles(mock_connect, tmpfile):
         ("schema1", "table1", "{user1=rwa/user1}", RELKIND_TABLE),
         ("schema2", "table2", "{user2=r/user2}", RELKIND_TABLE),
     ]
-    expected_yml = u"""\
+    expected_yml = """\
         objects:
           schema1.table1:
             user1: select, update, insert
@@ -149,8 +172,7 @@ def test_investigate_with_roles(mock_connect, tmpfile):
     mock_cur = mock_con.cursor.return_value
     mock_cur.fetchall.return_value = given_acl
     # execute
-    ipmt.permissions.investigate('test@host/test', tmpfile, ['user1'],
-                                 None)
+    ipmt.permissions.investigate("test@host/test", tmpfile, ["user1"], None)
     tmpfile.seek(0)
     assert yaml.safe_load(tmpfile) == yaml.safe_load(expected_yml)
 
@@ -160,7 +182,7 @@ def test_investigate_with_excl(mock_connect, tmpfile):
     given_acl = [
         ("schema2", "table2", "{user2=r/user1}", RELKIND_TABLE),
     ]
-    expected_yml = u"""\
+    expected_yml = """\
         exclude:
         - schema1.table1
         objects:
@@ -174,8 +196,9 @@ def test_investigate_with_excl(mock_connect, tmpfile):
     mock_cur = mock_con.cursor.return_value
     mock_cur.fetchall.return_value = given_acl
     # execute
-    ipmt.permissions.investigate('test@host/test', tmpfile, None,
-                                 ['schema1.table1'])
+    ipmt.permissions.investigate(
+        "test@host/test", tmpfile, None, ["schema1.table1"]
+    )
     tmpfile.seek(0)
     assert yaml.safe_load(tmpfile) == yaml.safe_load(expected_yml)
 
@@ -187,7 +210,7 @@ def test_update_base(mock_connect, tmpfile):
         ("schema1", "table2", "{user1=r/user1}", RELKIND_TABLE),
         ("schema2", "table1", "{user2=U/user2}", RELKIND_TABLE),
     ]
-    given_yml = u"""\
+    given_yml = """\
         objects:
           schema1.table1:
             user1: select, update, insert
@@ -200,10 +223,10 @@ def test_update_base(mock_connect, tmpfile):
         - user2
     """
     expected_sql = (
-        'BEGIN ISOLATION LEVEL READ COMMITTED;\n'
-        'GRANT UPDATE ON TABLE schema1.table2 TO user1;\n'
-        'GRANT INSERT,SELECT,UPDATE ON TABLE schema2.table1 TO user2;\n'
-        'COMMIT;'
+        "BEGIN ISOLATION LEVEL READ COMMITTED;\n"
+        "GRANT UPDATE ON TABLE schema1.table2 TO user1;\n"
+        "GRANT INSERT,SELECT,UPDATE ON TABLE schema2.table1 TO user2;\n"
+        "COMMIT;"
     )
     # prepare
     mock_con = mock_connect.return_value
@@ -212,8 +235,9 @@ def test_update_base(mock_connect, tmpfile):
     tmpfile.write(given_yml)
     tmpfile.seek(0)
     # execute
-    queries = ipmt.permissions.update('test@host/test', tmpfile, None,
-                                      None, True)
+    queries = ipmt.permissions.update(
+        "test@host/test", tmpfile, None, None, True
+    )
     assert expected_sql == queries
 
 
@@ -224,7 +248,7 @@ def test_update_with_roles(mock_connect, tmpfile):
         ("schema1", "table2", "{user1=r/user1}", RELKIND_TABLE),
         ("schema2", "table1", "{user2=U/user2}", RELKIND_TABLE),
     ]
-    given_yml = u"""\
+    given_yml = """\
         objects:
           schema1.table1:
             user1: select, update, insert
@@ -237,9 +261,9 @@ def test_update_with_roles(mock_connect, tmpfile):
         - user2
     """
     expected_sql = (
-        'BEGIN ISOLATION LEVEL READ COMMITTED;\n'
-        'GRANT UPDATE ON TABLE schema1.table2 TO user1;\n'
-        'COMMIT;'
+        "BEGIN ISOLATION LEVEL READ COMMITTED;\n"
+        "GRANT UPDATE ON TABLE schema1.table2 TO user1;\n"
+        "COMMIT;"
     )
     # prepare
     mock_con = mock_connect.return_value
@@ -248,8 +272,9 @@ def test_update_with_roles(mock_connect, tmpfile):
     tmpfile.write(given_yml)
     tmpfile.seek(0)
     # execute
-    queries = ipmt.permissions.update('test@host/test', tmpfile, ["user1"],
-                                      None, True)
+    queries = ipmt.permissions.update(
+        "test@host/test", tmpfile, ["user1"], None, True
+    )
     assert expected_sql == queries
 
 
@@ -260,7 +285,7 @@ def test_update_with_excl(mock_connect, tmpfile):
         ("schema1", "table2", "{user1=r/user1}", RELKIND_TABLE),
         ("schema2", "table1", "{user2=r/user2}", RELKIND_TABLE),
     ]
-    given_yml = u"""\
+    given_yml = """\
         objects:
           schema1.table1:
             user1: select
@@ -273,9 +298,9 @@ def test_update_with_excl(mock_connect, tmpfile):
         - user2
     """
     expected_sql = (
-        'BEGIN ISOLATION LEVEL READ COMMITTED;\n'
-        'GRANT UPDATE ON TABLE schema1.table2 TO user1;\n'
-        'COMMIT;'
+        "BEGIN ISOLATION LEVEL READ COMMITTED;\n"
+        "GRANT UPDATE ON TABLE schema1.table2 TO user1;\n"
+        "COMMIT;"
     )
     # prepare
     mock_con = mock_connect.return_value
@@ -284,6 +309,7 @@ def test_update_with_excl(mock_connect, tmpfile):
     tmpfile.write(given_yml)
     tmpfile.seek(0)
     # execute
-    queries = ipmt.permissions.update('test@host/test', tmpfile, None,
-                                      ["schema2.table1"], True)
+    queries = ipmt.permissions.update(
+        "test@host/test", tmpfile, None, ["schema2.table1"], True
+    )
     assert expected_sql == queries

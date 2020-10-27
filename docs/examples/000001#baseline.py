@@ -6,9 +6,11 @@ def up(db):
     """
     :type db: ipmt.db.Database
     """
-    db.execute("""\
+    db.execute(
+        """\
         CREATE SCHEMA myschema;
-    """)
+    """
+    )
 
 
 @transactional(isolation_level=SERIALIZABLE)
@@ -16,6 +18,8 @@ def down(db):
     """
     :type db: ipmt.db.Database
     """
-    db.execute("""\
+    db.execute(
+        """\
         DROP SCHEMA myschema;
-    """)
+    """
+    )
