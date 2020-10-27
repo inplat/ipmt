@@ -52,7 +52,7 @@ jobs:
         pip install poetry${USING_POETRY_VERSION}
         poetry install -v
     - run: poetry check
-    - run: poetry run black examples ipapp tests --check
+    - run: poetry run black --check
     - run: poetry run safety check
     - run: poetry run flake8 ipapp examples tests
 
