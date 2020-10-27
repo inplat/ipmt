@@ -25,116 +25,126 @@ def parse_argv(prog, options):
     parser = argparse.ArgumentParser(prog=prog)
 
     parser.add_argument(
-        '--log-level',
-        dest='log_level',
+        "--log-level",
+        dest="log_level",
         type=str,
-        default='INFO',
-        choices=[
-            'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'
-        ],
-        help='Logging level',
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Logging level",
     )
 
     parser.add_argument(
-        '--log-file',
-        dest='log_file',
+        "--log-file",
+        dest="log_file",
         type=str,
-        help='Logging file name',
+        help="Logging file name",
     )
 
     subparsers = parser.add_subparsers()
 
-    parser_version = subparsers.add_parser('version')
+    parser_version = subparsers.add_parser("version")
     parser_version.set_defaults(func=version)
 
-    parser_revision = subparsers.add_parser('create')
-    parser_revision.add_argument('--branch', '-b', type=str, dest='branch')
+    parser_revision = subparsers.add_parser("create")
+    parser_revision.add_argument("--branch", "-b", type=str, dest="branch")
     _add_argument_path(parser_revision)
-    parser_revision.add_argument('message', type=str, nargs='+')
+    parser_revision.add_argument("message", type=str, nargs="+")
     parser_revision.set_defaults(func=create)
 
-    parser_head = subparsers.add_parser('head')
-    parser_head.add_argument('--branch', '-b', type=str, dest='branch')
+    parser_head = subparsers.add_parser("head")
+    parser_head.add_argument("--branch", "-b", type=str, dest="branch")
     _add_argument_path(parser_head)
     parser_head.set_defaults(func=head)
 
-    parser_show = subparsers.add_parser('show')
+    parser_show = subparsers.add_parser("show")
     _add_argument_path(parser_show)
     _add_argument_dsn(parser_show)
     parser_show.set_defaults(func=show)
 
-    parser_init = subparsers.add_parser('init')
+    parser_init = subparsers.add_parser("init")
     _add_argument_path(parser_init)
     _add_argument_dsn(parser_init, False)
     parser_init.set_defaults(func=init)
 
-    parser_current = subparsers.add_parser('current')
+    parser_current = subparsers.add_parser("current")
     _add_argument_path(parser_current)
     _add_argument_dsn(parser_current)
     parser_current.set_defaults(func=current)
 
-    parser_actualize = subparsers.add_parser('actualize')
+    parser_actualize = subparsers.add_parser("actualize")
     _add_argument_path(parser_actualize)
     _add_argument_dsn(parser_actualize)
     _add_argument_plan(parser_actualize)
     _add_argument_dry_run(parser_actualize)
     parser_actualize.set_defaults(func=actualize)
 
-    parser_up = subparsers.add_parser('up')
+    parser_up = subparsers.add_parser("up")
     _add_argument_path(parser_up)
     _add_argument_dsn(parser_up)
     _add_argument_plan(parser_up)
     _add_argument_dry_run(parser_up)
-    parser_up.add_argument('ver', type=str, nargs='?')
+    parser_up.add_argument("ver", type=str, nargs="?")
     parser_up.set_defaults(func=up)
 
-    parser_switch = subparsers.add_parser('switch')
+    parser_switch = subparsers.add_parser("switch")
     _add_argument_path(parser_switch)
     _add_argument_dsn(parser_switch)
     _add_argument_plan(parser_switch)
     _add_argument_dry_run(parser_switch)
-    parser_switch.add_argument('ver', type=str)
+    parser_switch.add_argument("ver", type=str)
     parser_switch.set_defaults(func=switch)
 
-    parser_down = subparsers.add_parser('down')
+    parser_down = subparsers.add_parser("down")
     _add_argument_path(parser_down)
     _add_argument_dsn(parser_down)
     _add_argument_plan(parser_down)
     _add_argument_dry_run(parser_down)
-    parser_down.add_argument('ver', type=str, nargs='?')
+    parser_down.add_argument("ver", type=str, nargs="?")
     parser_down.set_defaults(func=down)
 
-    parser_rebase = subparsers.add_parser('rebase')
+    parser_rebase = subparsers.add_parser("rebase")
     _add_argument_path(parser_rebase)
-    parser_rebase.add_argument('branch', type=str)
+    parser_rebase.add_argument("branch", type=str)
     parser_rebase.set_defaults(func=rebase)
 
-    parser_grant = subparsers.add_parser('grant')
+    parser_grant = subparsers.add_parser("grant")
     _add_argument_dsn(parser_grant)
     _add_argument_dry_run(parser_grant)
-    parser_grant.add_argument('--output', '-o', dest='output',
-                              type=argparse.FileType(mode='w'),
-                              )
-    parser_grant.add_argument('--input', '-i', dest='input',
-                              type=argparse.FileType(mode='r'),
-                              )
-    parser_grant.add_argument('--roles', '-r', metavar='N', type=str,
-                              nargs='+', dest="roles")
-    parser_grant.add_argument('--exclude', '-e', metavar='N', type=str,
-                              nargs='+', dest="exclude")
+    parser_grant.add_argument(
+        "--output",
+        "-o",
+        dest="output",
+        type=argparse.FileType(mode="w"),
+    )
+    parser_grant.add_argument(
+        "--input",
+        "-i",
+        dest="input",
+        type=argparse.FileType(mode="r"),
+    )
+    parser_grant.add_argument(
+        "--roles", "-r", metavar="N", type=str, nargs="+", dest="roles"
+    )
+    parser_grant.add_argument(
+        "--exclude", "-e", metavar="N", type=str, nargs="+", dest="exclude"
+    )
     parser_grant.set_defaults(func=grant)
 
-    parser_dump = subparsers.add_parser('dump')
+    parser_dump = subparsers.add_parser("dump")
     _add_argument_path(parser_dump)
-    parser_dump.add_argument('--docker-image', dest="docker_image",
-                             type=str,
-                             default='postgres')
-    parser_dump.add_argument('--docker-version', dest="docker_version",
-                             type=str,
-                             default='latest')
-    parser_dump.add_argument('--output', '-o', dest='output',
-                             type=argparse.FileType(mode='w'),)
-    parser_dump.add_argument('ver', type=str, nargs=1)
+    parser_dump.add_argument(
+        "--docker-image", dest="docker_image", type=str, default="postgres"
+    )
+    parser_dump.add_argument(
+        "--docker-version", dest="docker_version", type=str, default="latest"
+    )
+    parser_dump.add_argument(
+        "--output",
+        "-o",
+        dest="output",
+        type=argparse.FileType(mode="w"),
+    )
+    parser_dump.add_argument("ver", type=str, nargs=1)
     parser_dump.set_defaults(func=dump)
 
     return parser.parse_args(options)
@@ -146,9 +156,8 @@ def _add_argument_path(parser):
     :type parser: argparse.ArgumentParser
     """
 
-    path = os.getenv('IPMT_PATH', 'versions')
-    parser.add_argument('--path', '-p', type=str, dest='path',
-                        default=path)
+    path = os.getenv("IPMT_PATH", "versions")
+    parser.add_argument("--path", "-p", type=str, dest="path", default=path)
 
 
 def _add_argument_dry_run(parser):
@@ -156,8 +165,9 @@ def _add_argument_dry_run(parser):
     :param parser:
     :type parser: argparse.ArgumentParser
     """
-    parser.add_argument('--dry-run', action="store_true", dest='dry_run',
-                        default=False)
+    parser.add_argument(
+        "--dry-run", action="store_true", dest="dry_run", default=False
+    )
 
 
 def _add_argument_dsn(parser, required=True):
@@ -167,11 +177,17 @@ def _add_argument_dsn(parser, required=True):
     :type parser: argparse.ArgumentParser
     :type required: bool
     """
-    dsn = os.getenv('IPMT_DSN')
+    dsn = os.getenv("IPMT_DSN")
     if dsn is not None:
         required = False
-    parser.add_argument('--database', '-d', type=str, dest='database',
-                        default=dsn, required=required)
+    parser.add_argument(
+        "--database",
+        "-d",
+        type=str,
+        dest="database",
+        default=dsn,
+        required=required,
+    )
 
 
 def _add_argument_plan(parser):
@@ -179,8 +195,13 @@ def _add_argument_plan(parser):
     :param parser:
     :type parser: argparse.ArgumentParser
     """
-    parser.add_argument('--show-plan', '-s', action="store_true",
-                        dest='show_plan', default=False)
+    parser.add_argument(
+        "--show-plan",
+        "-s",
+        action="store_true",
+        dest="show_plan",
+        default=False,
+    )
 
 
 def setup_logging(options):
@@ -331,12 +352,13 @@ def grant(args):
     :type args: argparse.Namespace
     """
     if args.output:
-        ipmt.permissions.investigate(args.database, args.output, args.roles,
-                                     args.exclude)
+        ipmt.permissions.investigate(
+            args.database, args.output, args.roles, args.exclude
+        )
     else:
-        queries = ipmt.permissions.update(args.database, args.input,
-                                          args.roles, args.exclude,
-                                          args.dry_run)
+        queries = ipmt.permissions.update(
+            args.database, args.input, args.roles, args.exclude, args.dry_run
+        )
         if args.dry_run:
             print(queries)
 
@@ -348,8 +370,10 @@ def dump(args):
     :return:
     """
     repo = ipmt.migration.Repository.load(args.path)
-    print(repo.dump(args.ver[0], args.docker_image, args.docker_version),
-          file=args.output or sys.stdout)
+    print(
+        repo.dump(args.ver[0], args.docker_image, args.docker_version),
+        file=args.output or sys.stdout,
+    )
 
 
 def main(prog=None, args=None):
@@ -364,10 +388,10 @@ def main(prog=None, args=None):
     try:
         options = parse_argv(prog, args)
         setup_logging(options)
-        if hasattr(options, 'func'):
+        if hasattr(options, "func"):
             return options.func(options)
         else:
-            logging.info('Nothing to do')
+            logging.info("Nothing to do")
     except IpmtError as e:
         print(str(e), file=sys.stderr)
         return 1

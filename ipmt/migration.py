@@ -15,14 +15,19 @@ from docker.client import DockerClient
 from docker.utils import kwargs_from_env
 from ipmt.error import RepositoryError, OperationError
 from ipmt.db import Database, Transaction
-from ipmt.misc import autodetect_pg_dump_path, pg_dump, repr_str_multiline, \
-    load_module_py
+from ipmt.misc import (
+    autodetect_pg_dump_path,
+    pg_dump,
+    repr_str_multiline,
+    load_module_py,
+)
 
 
-ROOT_BRANCH_NAME = '0'
-NAME_PATTERN = 'a-zA-Z0-9_'
-FILE_PATTERN = r'^((\d+)(?:\.([a-zA-Z0-9-]+)\.(\d+))*)#([%s]*)\.py$' % \
-               NAME_PATTERN
+ROOT_BRANCH_NAME = "0"
+NAME_PATTERN = "a-zA-Z0-9_"
+FILE_PATTERN = (
+    r"^((\d+)(?:\.([a-zA-Z0-9-]+)\.(\d+))*)#([%s]*)\.py$" % NAME_PATTERN
+)
 MIGRATION_TEMPLATE = '''\
 """
 Name: {{{{ name }}}}
@@ -67,12 +72,14 @@ class Repository(object):
         if dsn:
             pg_dump_path = autodetect_pg_dump_path()
             if not pg_dump_path:
-                raise OperationError("Error: pg_dump executable not found.\n"
-                                     "Please add the directory containing "
-                                     "pg_dump to the PATH")
+                raise OperationError(
+                    "Error: pg_dump executable not found.\n"
+                    "Please add the directory containing "
+                    "pg_dump to the PATH"
+                )
 
         if os.path.exists(path):
-            raise OperationError('Directory %s already exists' % path)
+            raise OperationError("Directory %s already exists" % path)
         os.mkdir(path)
         try:
             if pg_dump_path:
@@ -80,7 +87,7 @@ class Repository(object):
         except Exception:
             os.rmdir(path)
             raise
-        return 'Initialized new repository in %s' % path
+        return "Initialized new repository in %s" % path
 
     @staticmethod
     def load(path):
@@ -96,18 +103,18 @@ class Repository(object):
     def meta(self):
         if self._meta is not None:
             return self._meta
-        filename = os.path.join(self.path, 'meta.yml')
+        filename = os.path.join(self.path, "meta.yml")
         if os.path.exists(filename):
-            with io.open(filename, 'r', encoding="UTF8") as f:
+            with io.open(filename, "r", encoding="UTF8") as f:
                 self._meta = yaml.load(f.read())
         return self._meta
 
     @meta.setter
     def meta(self, value):
         self._meta = value
-        filename = os.path.join(self.path, 'meta.yml')
-        with io.open(filename, 'w', encoding="UTF8") as f:
-            f.write(yaml.dump(value) + u"\n")
+        filename = os.path.join(self.path, "meta.yml")
+        with io.open(filename, "w", encoding="UTF8") as f:
+            f.write(yaml.dump(value) + "\n")
 
     @property
     def is_empty(self):
@@ -118,19 +125,20 @@ class Repository(object):
             self.db = Database(dsn)
         return self.db
 
-    def create(self, message, branch, sql_up='', sql_down=''):
+    def create(self, message, branch, sql_up="", sql_down=""):
         if branch:
             target_branch = self.root.find_branch(branch)
             if target_branch is None:
-                bpath = branch.split('.')
+                bpath = branch.split(".")
                 if len(bpath) < 2 or len(bpath) % 2:
                     raise OperationError("Invalid branch name %s" % branch)
                 else:
                     parent_ver = ".".join(bpath[0:-1])
                     parent = self.root.find_version(parent_ver)
                     if parent is None:
-                        raise OperationError("Version %s does not exists"
-                                             "" % parent_ver)
+                        raise OperationError(
+                            "Version %s does not exists" "" % parent_ver
+                        )
                     target_branch = Branch(bpath, self, parent)
                     parent.branches[bpath[-1]] = target_branch
         else:
@@ -140,8 +148,9 @@ class Repository(object):
             vpath = head.vpath[:]
             vpath[-1] = Version.format_version(int(vpath[-1]) + 1, head.branch)
         else:
-            vpath = (target_branch.bpath or []) + \
-                    [Version.format_version(1, target_branch)]
+            vpath = (target_branch.bpath or []) + [
+                Version.format_version(1, target_branch)
+            ]
         name = Version._get_name(message)
         new_version = Version(vpath, None, name, self, target_branch)
         new_version.save(sql_up=sql_up, sql_down=sql_down)
@@ -159,7 +168,7 @@ class Repository(object):
         if head_branch.head:
             return head_branch.head.full_version
         else:
-            return '0'
+            return "0"
 
     def show(self, dsn):
         self.db = self.get_db(dsn)
@@ -175,7 +184,7 @@ class Repository(object):
         :rtype: str
         """
         db = self.get_db(dsn)
-        return db.current or '0'
+        return db.current or "0"
 
     def up(self, version, dsn, show_plan, dry_run):
         """
@@ -196,7 +205,7 @@ class Repository(object):
         """
         self._check_consistency(dsn)
         current = self._current_version(dsn)
-        if version is not None and version != 'latest':
+        if version is not None and version != "latest":
             target = self.root.find_version(version)
         elif current is not None:
             target = current.branch.head
@@ -204,7 +213,8 @@ class Repository(object):
             target = self.root.head
         if target is None:
             raise OperationError(
-                "Target version %s not found in repository" % version)
+                "Target version %s not found in repository" % version
+            )
         plan = Plan.get_switch_plan(current, target, self)
         db = self.get_db(dsn)
         if show_plan:
@@ -214,7 +224,7 @@ class Repository(object):
             if dry_run:
                 return "\n\n".join(db.buffer)
             else:
-                return self.current(dsn) or '0'
+                return self.current(dsn) or "0"
 
     def down(self, version, dsn, show_plan, dry_run):
         """
@@ -236,13 +246,14 @@ class Repository(object):
         self._check_consistency(dsn)
         current = self._current_version(dsn)
         if version:
-            if version == '0':
+            if version == "0":
                 target = None
             else:
                 target = self.root.find_version(version)
                 if target is None:
                     raise OperationError(
-                        "Target version %s not found in repository" % version)
+                        "Target version %s not found in repository" % version
+                    )
         elif current is not None:
             target = current.prev
         else:
@@ -256,7 +267,7 @@ class Repository(object):
             if dry_run:
                 return "\n\n".join(db.buffer)
             else:
-                return self.current(dsn) or '0'
+                return self.current(dsn) or "0"
 
     def actualize(self, dsn, show_plan, dry_run):
         db_current = self.current(dsn)
@@ -267,18 +278,22 @@ class Repository(object):
             down_hist = self.db.history
             for i in range(len(down_hist)):
                 down_hist[i] = self.root.find_version(
-                    self._search_newest_version(down_hist[i]))
+                    self._search_newest_version(down_hist[i])
+                )
 
             up_plan = Plan.get_plan(current, self)
             i = 0
-            while down_hist[i].full_version == \
-                    up_plan[i].version.full_version \
-                    and len(up_plan) > 0:
+            while (
+                down_hist[i].full_version == up_plan[i].version.full_version
+                and len(up_plan) > 0
+            ):
                 i += 1
             plan = Plan(
-                [Action(False, v) for v in reversed(down_hist[i:])] +
-                up_plan[i:],
-                self, current, current
+                [Action(False, v) for v in reversed(down_hist[i:])]
+                + up_plan[i:],
+                self,
+                current,
+                current,
             )
             if show_plan:
                 return plan
@@ -288,19 +303,20 @@ class Repository(object):
                 if dry_run:
                     return "\n\n".join(db.buffer)
                 else:
-                    return self.current(dsn) or '0'
-        return 'Everything fine'
+                    return self.current(dsn) or "0"
+        return "Everything fine"
 
     def switch(self, version, dsn, show_plan, dry_run):
         self._check_consistency(dsn)
         current = self._current_version(dsn)
-        if version == '0':
+        if version == "0":
             target = None
         else:
             target = self.root.find_version(version)
             if target is None:
                 raise OperationError(
-                    "Target version %s not found in repository" % version)
+                    "Target version %s not found in repository" % version
+                )
         plan = Plan.get_switch_plan(current, target, self)
         db = self.get_db(dsn)
         if show_plan:
@@ -310,37 +326,40 @@ class Repository(object):
             if dry_run:
                 return "\n\n".join(db.buffer)
             else:
-                return self.current(dsn) or '0'
+                return self.current(dsn) or "0"
 
     def rebase(self, branch):
         br = self.root.find_branch(branch)
         if br is None:
             raise OperationError(
-                "Target branch %s not found in repository" % branch)
+                "Target branch %s not found in repository" % branch
+            )
         return br.rebase()
 
     def dump(self, ver, image, version):
         return self._create_dump(ver, image, version)
 
     def _create_dump(self, ver, image, version):
-        dbname = 'postgres'
-        user = 'postgres'
-        is_greenplum = 'gpdb' in image
+        dbname = "postgres"
+        user = "postgres"
+        is_greenplum = "gpdb" in image
         if is_greenplum:
-            user = 'gpadmin'
+            user = "gpadmin"
 
         fix = self._create_docker_pg_db(
             image=image,
             version=version,
             dbname=dbname,
             user=user,
-            init_timeout=600)
+            init_timeout=600,
+        )
         pg, cont = next(fix)
 
         try:
             self.db = None
-            self.up(ver, '%s@%s/%s' % (user, ('%s:%s' % pg), dbname),
-                    False, False)
+            self.up(
+                ver, "%s@%s/%s" % (user, ("%s:%s" % pg), dbname), False, False
+            )
 
             if is_greenplum:
                 _, dump = cont.exec_run(
@@ -348,14 +367,22 @@ class Repository(object):
                     "ln -s /opt/gpdb/lib/libpq.so.5 /usr/lib/libpq.so.5 && "
                     "/opt/gpdb/bin/pg_dump -h 127.0.0.1 -U %s "
                     "--schema-only --no-owner --no-privileges %s'"
-                    "" % (user, dbname))
+                    "" % (user, dbname)
+                )
             else:
-                _, dump = cont.exec_run([
-                    'gosu', 'postgres', 'pg_dump',
-                    '--schema-only', '--no-owner',
-                    '--no-privileges', '--no-tablespaces',
-                    '--no-unlogged-table-data', 'postgres'
-                ])
+                _, dump = cont.exec_run(
+                    [
+                        "gosu",
+                        "postgres",
+                        "pg_dump",
+                        "--schema-only",
+                        "--no-owner",
+                        "--no-privileges",
+                        "--no-tablespaces",
+                        "--no-unlogged-table-data",
+                        "postgres",
+                    ]
+                )
             return dump.decode("UTF-8")
         finally:
             try:
@@ -364,33 +391,43 @@ class Repository(object):
                 pass
 
     @staticmethod
-    def _create_docker_pg_db(image, version='latest', user='postgres',
-                             dbname='postgres', host='127.0.0.1',
-                             init_timeout=10):
+    def _create_docker_pg_db(
+        image,
+        version="latest",
+        user="postgres",
+        dbname="postgres",
+        host="127.0.0.1",
+        init_timeout=10,
+    ):
         # searching free port
         sock = socket.socket()
-        sock.bind(('', 0))
+        sock.bind(("", 0))
         port = sock.getsockname()[1]
         sock.close()
 
-        client = DockerClient(version='auto', **kwargs_from_env())
+        client = DockerClient(version="auto", **kwargs_from_env())
         cont = client.containers.run(
-            f'{image}:{version}', detach=True,
-            ports={'5432/tcp': (host, port)},
-            environment={"POSTGRES_HOST_AUTH_METHOD": "trust"}
+            f"{image}:{version}",
+            detach=True,
+            ports={"5432/tcp": (host, port)},
+            environment={"POSTGRES_HOST_AUTH_METHOD": "trust"},
         )
         try:
             start_time = time.time()
             conn = None
             while conn is None:
                 if start_time + init_timeout < time.time():
-                    raise Exception("Initialization timeout, failed to "
-                                    "initialize postgresql container")
+                    raise Exception(
+                        "Initialization timeout, failed to "
+                        "initialize postgresql container"
+                    )
                 try:
-                    conn = psycopg2.connect(f'dbname={dbname} user={user} '
-                                            f'host={host} port={port}')
+                    conn = psycopg2.connect(
+                        f"dbname={dbname} user={user} "
+                        f"host={host} port={port}"
+                    )
                 except psycopg2.OperationalError:
-                    time.sleep(.10)
+                    time.sleep(0.10)
             conn.close()
             yield (host, port), cont
         finally:
@@ -405,8 +442,10 @@ class Repository(object):
         all_files = Repository._search_rep_files(self.path)
         self.root = Branch.load(None, all_files, self, None)
         if len(all_files):
-            raise RepositoryError('Found deattached versions: %s' % (
-                ', '.join([item[0] for item in all_files]),))
+            raise RepositoryError(
+                "Found deattached versions: %s"
+                % (", ".join([item[0] for item in all_files]),)
+            )
 
     @staticmethod
     def _create_baseline(path, dsn):
@@ -414,16 +453,16 @@ class Repository(object):
         returncode, stdout, stderr = pg_dump(dsn, dump_filename)
         if returncode != 0:
             raise OperationError(stderr)
-        with open(dump_filename, 'a') as f:
-            f.write('SET search_path = public, pg_catalog;\n')
+        with open(dump_filename, "a") as f:
+            f.write("SET search_path = public, pg_catalog;\n")
 
         rep = Repository.load(path)
         db = rep.get_db(dsn)
-        with io.open(dump_filename, 'r', encoding='UTF8') as f:
+        with io.open(dump_filename, "r", encoding="UTF8") as f:
             sql_up = f.read()
             sql_down = "\n".join(db.schemas)
             filename = rep.create("baseline", None, sql_up, sql_down)
-        db.ops_add('up', None, os.path.basename(filename).split('#')[0])
+        db.ops_add("up", None, os.path.basename(filename).split("#")[0])
 
     @staticmethod
     def _search_rep_files(path):
@@ -435,28 +474,34 @@ class Repository(object):
             if os.path.isfile(filename):
                 matches = reg.search(os.path.basename(file))
                 if matches:
-                    rep_files.append((file, os.path.join(path, file),
-                                      matches.group(5),
-                                      matches.group(1).split('.')))
+                    rep_files.append(
+                        (
+                            file,
+                            os.path.join(path, file),
+                            matches.group(5),
+                            matches.group(1).split("."),
+                        )
+                    )
                     continue
             logging.debug("Skipping %s" % filename)
         return rep_files
 
     def _current_version(self, dsn):
         current_ver = self.current(dsn)
-        if current_ver and current_ver != '0':
+        if current_ver and current_ver != "0":
             current = self.root.find_version(current_ver)
             if current is None:
                 raise OperationError(
-                    "Current version %s not found in repository" % current_ver)
+                    "Current version %s not found in repository" % current_ver
+                )
             return current
         return None
 
     def _check_consistency(self, dsn):
         errors = self._check_for_actualize(dsn)
         if len(errors):
-            err_str = ', '.join(["%s -> %s" % e for e in errors])
-            raise OperationError('Inconsistent state: %s' % err_str)
+            err_str = ", ".join(["%s -> %s" % e for e in errors])
+            raise OperationError("Inconsistent state: %s" % err_str)
 
     def _check_for_actualize(self, dsn):
         current_ver = self.current(dsn)
@@ -469,10 +514,11 @@ class Repository(object):
                 history.append((ver, meta["rebase"][ver]))
                 ver = meta["rebase"][ver]
             for old_ver, new_ver in history:
-                old_vpath = old_ver.split('.')
-                new_vpath = new_ver.split('.')
-                if len(old_vpath) != len(new_vpath) + 2 \
-                        or int(old_vpath[-1]) + 1 != int(new_vpath[-1]):
+                old_vpath = old_ver.split(".")
+                new_vpath = new_ver.split(".")
+                if len(old_vpath) != len(new_vpath) + 2 or int(
+                    old_vpath[-1]
+                ) + 1 != int(new_vpath[-1]):
                     errors.append((old_ver, new_ver))
         return errors
 
@@ -494,7 +540,7 @@ class Repository(object):
         return self.root.find_branch(branch).head
 
     def __repr__(self):
-        return '%s(%r)' % (self.__class__.__name__, self.path)
+        return "%s(%r)" % (self.__class__.__name__, self.path)
 
 
 class Version(object):
@@ -530,15 +576,18 @@ class Version(object):
     def show(self, padding="", highlight=None, color=True):
         if highlight is not None and self.full_version in highlight:
             if color:
-                res = "%s\033[1mver. %s\033[0m\n" % (padding,
-                                                     self.full_version)
+                res = "%s\033[1mver. %s\033[0m\n" % (
+                    padding,
+                    self.full_version,
+                )
             else:
                 res = "%s[ver. %s]\n" % (padding, self.full_version)
         else:
             res = "%sver. %s\n" % (padding, self.full_version)
         for name in sorted(self.branches.keys()):
-            res += self.branches[name].show(padding=padding + "  ",
-                                            highlight=highlight)
+            res += self.branches[name].show(
+                padding=padding + "  ", highlight=highlight
+            )
         return res
 
     def up(self, db):
@@ -549,21 +598,28 @@ class Version(object):
 
     def save(self, sql_up, sql_down):
         if self.filename:
-            raise OperationError('File already exists %s' % self.filename)
+            raise OperationError("File already exists %s" % self.filename)
         self.filename = os.path.join(
             self.rep.path,
-            Version.TEMPLATE_FILENAME.format(version=self.full_version,
-                                             name=self.name))
+            Version.TEMPLATE_FILENAME.format(
+                version=self.full_version, name=self.name
+            ),
+        )
         logging.debug("Generating %s" % self.filename)
-        tmpl = jinja2.Template(MIGRATION_TEMPLATE.format(
-            sql_up=repr_str_multiline(sql_up),
-            sql_down=repr_str_multiline(sql_down)))
-        with io.open(self.filename, 'w', encoding="UTF8") as f:
-            f.write(tmpl.render(
-                now=datetime.datetime.utcnow(),
-                version=self.full_version,
-                name=self.name
-            ))
+        tmpl = jinja2.Template(
+            MIGRATION_TEMPLATE.format(
+                sql_up=repr_str_multiline(sql_up),
+                sql_down=repr_str_multiline(sql_down),
+            )
+        )
+        with io.open(self.filename, "w", encoding="UTF8") as f:
+            f.write(
+                tmpl.render(
+                    now=datetime.datetime.utcnow(),
+                    version=self.full_version,
+                    name=self.name,
+                )
+            )
 
     def can_rebase(self, branch):
         """
@@ -578,9 +634,11 @@ class Version(object):
         :type branch: Branch
         """
         if not self.can_rebase(branch):
-            raise OperationError('Version %s can not be rebased, because have '
-                                 'own branches' % self.full_version)
-        result = ''
+            raise OperationError(
+                "Version %s can not be rebased, because have "
+                "own branches" % self.full_version
+            )
+        result = ""
         old_full_version = self.full_version
         head = branch.head
         if head:
@@ -595,16 +653,18 @@ class Version(object):
         old_filename = self.filename
         self.filename = os.path.join(
             self.rep.path,
-            Version.TEMPLATE_FILENAME.format(version=self.full_version,
-                                             name=self.name))
+            Version.TEMPLATE_FILENAME.format(
+                version=self.full_version, name=self.name
+            ),
+        )
         branch.append(self)
         result += "Moving %s to %s\n" % (old_full_version, self.full_version)
         meta = self.rep.meta
         if meta is None:
             meta = {}
-        if 'rebase' not in meta:
-            meta['rebase'] = {}
-        meta['rebase'][old_full_version] = self.full_version
+        if "rebase" not in meta:
+            meta["rebase"] = {}
+        meta["rebase"][old_full_version] = self.full_version
         self.rep.meta = meta
         os.rename(old_filename, self.filename)
         return result
@@ -618,7 +678,7 @@ class Version(object):
 
     @staticmethod
     def validate_version(version):
-        vpath = version.split('.')
+        vpath = version.split(".")
         for i in range(0, len(vpath), 2):
             try:
                 int(vpath[i])
@@ -631,19 +691,20 @@ class Version(object):
         branches = Version._search_branches(vpath, all_files)
         for bfile, bfilename, bname, bpath in branches:
             if bpath[-2] not in ver.branches:
-                ver.branches[bpath[-2]] = Branch.load(bpath[0:-1], all_files,
-                                                      rep, ver)
-        module_name = 'ipmt_' + str(uuid.uuid4()).replace('-', '')[0:16]
+                ver.branches[bpath[-2]] = Branch.load(
+                    bpath[0:-1], all_files, rep, ver
+                )
+        module_name = "ipmt_" + str(uuid.uuid4()).replace("-", "")[0:16]
         ver._mod = load_module_py(module_name, filename)
-        if hasattr(ver._mod, 'up'):
-            if hasattr(ver._mod.up, '__transactional__'):
+        if hasattr(ver._mod, "up"):
+            if hasattr(ver._mod.up, "__transactional__"):
                 ver.is_up_transactional = True
                 ver.isolation_level_up = ver._mod.up.__transactional__
             else:
                 ver.is_up_transactional = False
                 ver.isolation_level_up = None
-        if hasattr(ver._mod, 'down'):
-            if hasattr(ver._mod.down, '__transactional__'):
+        if hasattr(ver._mod, "down"):
+            if hasattr(ver._mod.down, "__transactional__"):
                 ver.is_down_transactional = True
                 ver.isolation_level_down = ver._mod.down.__transactional__
             else:
@@ -655,14 +716,14 @@ class Version(object):
     def _search_branches(cpath, all_files):
         result = []
         for file, filename, name, vpath in all_files:
-            if cpath == vpath[0:len(cpath)] and len(cpath) + 2 == len(vpath):
+            if cpath == vpath[0 : len(cpath)] and len(cpath) + 2 == len(vpath):
                 result.append((file, filename, name, vpath))
         return result
 
     @staticmethod
     def _get_name(message):
-        name = message.replace(' ', '_')
-        name = re.compile('[^%s]' % NAME_PATTERN).sub('', name).lower()[0:64]
+        name = message.replace(" ", "_")
+        name = re.compile("[^%s]" % NAME_PATTERN).sub("", name).lower()[0:64]
         return name
 
     def __lt__(self, other):
@@ -689,9 +750,14 @@ class Version(object):
         return fn(self.vpath[-1], other.vpath[-1])
 
     def __repr__(self):
-        return '%s(%r, %r, %r, %r, %r)' % (
-            self.__class__.__name__, self.vpath, self.filename, self.name,
-            self.rep, self.branch)
+        return "%s(%r, %r, %r, %r, %r)" % (
+            self.__class__.__name__,
+            self.vpath,
+            self.filename,
+            self.name,
+            self.rep,
+            self.branch,
+        )
 
 
 # class Branch(List[Version]):
@@ -720,10 +786,12 @@ class Branch(list):
         target_branch = self.parent.branch
         for version in self:
             if not version.can_rebase(target_branch):
-                raise OperationError('Version %s can not be rebased, because '
-                                     'have own branches' % self.full_version)
+                raise OperationError(
+                    "Version %s can not be rebased, because "
+                    "have own branches" % self.full_version
+                )
         history = []
-        result = ''
+        result = ""
         for version in self[:]:
             history.append(version.full_version)
             result += version.rebase(target_branch)
@@ -743,7 +811,8 @@ class Branch(list):
         for item in branch_files:
             file, filename, name, vpath = item
             branch.append(
-                Version.load(vpath, all_files, filename, name, rep, branch))
+                Version.load(vpath, all_files, filename, name, rep, branch)
+            )
             all_files.remove(item)
         return branch
 
@@ -754,7 +823,9 @@ class Branch(list):
             if bpath is None:
                 if len(vpath) == 1:
                     result.append((file, filename, name, vpath))
-            elif bpath == vpath[0:len(bpath)] and len(bpath) + 1 == len(vpath):
+            elif bpath == vpath[0 : len(bpath)] and len(bpath) + 1 == len(
+                vpath
+            ):
                 result.append((file, filename, name, vpath))
         return result
 
@@ -787,12 +858,12 @@ class Branch(list):
         """
         if path is None:
             return self
-        bpath = path.split('.')
+        bpath = path.split(".")
         search_version_val = bpath.pop(0)
         try:
             search_version = int(search_version_val)
         except ValueError:
-            raise OperationError('Invalid version %s' % search_version_val)
+            raise OperationError("Invalid version %s" % search_version_val)
         search_branch = bpath.pop(0)
         for ver in self:
             if ver.version == search_version:
@@ -810,7 +881,7 @@ class Branch(list):
         :rtype: Version
         """
         Version.validate_version(path)
-        vpath = path.split('.')
+        vpath = path.split(".")
         version = int(vpath.pop())
         branch = self
         if len(vpath):
@@ -824,13 +895,17 @@ class Branch(list):
     def __str__(self):
         ver = self.full_version
         if ver:
-            return 'Branch(' + self.full_version + ')'
+            return "Branch(" + self.full_version + ")"
         else:
-            return 'Root'
+            return "Root"
 
     def __repr__(self):
-        return '%s(%r, %r, %r)' % (self.__class__.__name__, self.bpath,
-                                   self.rep, self.parent)
+        return "%s(%r, %r, %r)" % (
+            self.__class__.__name__,
+            self.bpath,
+            self.rep,
+            self.parent,
+        )
 
 
 class Action(object):
@@ -861,7 +936,7 @@ class Action(object):
                 old_full_version = prev.full_version
             else:
                 old_full_version = None
-            db.ops_add('up', old_full_version, self.version.full_version)
+            db.ops_add("up", old_full_version, self.version.full_version)
         else:
             # logging.info("Downgrading %s" % self.version.full_version)
             self.version.down(db)
@@ -870,19 +945,22 @@ class Action(object):
                 new_full_version = prev.full_version
             else:
                 new_full_version = None
-            db.ops_add('down', self.version.full_version, new_full_version)
+            db.ops_add("down", self.version.full_version, new_full_version)
 
     def __str__(self):
         if self.is_up:
-            type = 'Up'
+            type = "Up"
         else:
-            type = 'Down'
-        xact = 'X' if self.is_transactional else ''
+            type = "Down"
+        xact = "X" if self.is_transactional else ""
         return "%s%s2Version(%s)" % (xact, type, str(self.version))
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__,
-                               self.is_up, self.version)
+        return "%s(%r, %r)" % (
+            self.__class__.__name__,
+            self.is_up,
+            self.version,
+        )
 
 
 class Plan(list):
@@ -898,10 +976,12 @@ class Plan(list):
             for action in self:
                 if up_only and not action.is_up:
                     raise OperationError(
-                        'Can not be downgraded from version %s' % repr(action))
+                        "Can not be downgraded from version %s" % repr(action)
+                    )
                 if down_only and action.is_up:
                     raise OperationError(
-                        'Can not be upgraded to version %s' % repr(action))
+                        "Can not be upgraded to version %s" % repr(action)
+                    )
         old_dry_run = db.dry_run
         db.dry_run = dry_run
         tr = None
@@ -912,8 +992,9 @@ class Plan(list):
             elif tr is not None and not action.is_transactional:
                 tr.commit()
                 tr = None
-            elif tr is not None \
-                    and tr.isolation_level != action.isolation_level:
+            elif (
+                tr is not None and tr.isolation_level != action.isolation_level
+            ):
                 tr.commit()
                 tr = Transaction(db, action.isolation_level)
                 tr.begin()
@@ -932,23 +1013,24 @@ class Plan(list):
         if current is None:
             cur_vers = Plan([], rep, None, None)
         else:
-            cur_vers = Plan._get_versions(current.rep.root,
-                                          current.vpath[:])
+            cur_vers = Plan._get_versions(current.rep.root, current.vpath[:])
         if target is None:
             tgt_vers = Plan([], rep, None, None)
         else:
             tgt_vers = Plan._get_versions(rep.root, target.vpath[:])
-        while len(cur_vers) \
-                and len(tgt_vers) \
-                and cur_vers[0].full_version == tgt_vers[0].full_version:
+        while (
+            len(cur_vers)
+            and len(tgt_vers)
+            and cur_vers[0].full_version == tgt_vers[0].full_version
+        ):
             cur_vers.pop(0)
             tgt_vers.pop(0)
         return Plan(
-            [Action(False, down) for down in reversed(cur_vers)] +
-            [Action(True, up) for up in tgt_vers],
+            [Action(False, down) for down in reversed(cur_vers)]
+            + [Action(True, up) for up in tgt_vers],
             rep,
             current,
-            target
+            target,
         )
 
     @staticmethod
@@ -977,27 +1059,32 @@ class Plan(list):
         return result
 
     def __repr__(self):
-        return '%s(%r, %r, %r, %r)' % (self.__class__.__name__,
-                                       self.seq, self.rep, self.current,
-                                       self.target)
+        return "%s(%r, %r, %r, %r)" % (
+            self.__class__.__name__,
+            self.seq,
+            self.rep,
+            self.current,
+            self.target,
+        )
 
     def __str__(self):
         if len(self) == 0:
-            return 'nothing to do'
+            return "nothing to do"
         plan_str = []
         for v in self:
-            ver = v.version.full_version if self.target else '0'
+            ver = v.version.full_version if self.target else "0"
             if v.is_up:
-                type = 'Up'
-                xact = 'x' if v.version.is_up_transactional else ''
+                type = "Up"
+                xact = "x" if v.version.is_up_transactional else ""
             else:
-                type = 'Down'
-                xact = 'x' if v.version.is_down_transactional else ''
+                type = "Down"
+                xact = "x" if v.version.is_down_transactional else ""
             plan_str.append("%s(%s%s)" % (ver, xact, type))
 
         if not self[-1].is_up:
-            plan_str.append(self.target.full_version if self.target else '0')
+            plan_str.append(self.target.full_version if self.target else "0")
         if self[0].is_up:
-            plan_str = [self.current.full_version if self.current else '0'] + \
-                       plan_str
-        return ' -> '.join(plan_str)
+            plan_str = [
+                self.current.full_version if self.current else "0"
+            ] + plan_str
+        return " -> ".join(plan_str)

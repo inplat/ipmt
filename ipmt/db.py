@@ -4,27 +4,27 @@ import psycopg2
 from ipmt.error import DbError
 from ipmt.misc import parse_dsn
 
-READ_UNCOMMITTED = 'READ UNCOMMITTED'
-READ_COMMITTED = 'READ COMMITTED'
-REPEATABLE_READ = 'REPEATABLE READ'
-SERIALIZABLE = 'SERIALIZABLE'
+READ_UNCOMMITTED = "READ UNCOMMITTED"
+READ_COMMITTED = "READ COMMITTED"
+REPEATABLE_READ = "REPEATABLE READ"
+SERIALIZABLE = "SERIALIZABLE"
 
-REL_TABLE = 'r'
-REL_INDEX = 'i'
-REL_SEQUENCE = 'S'
-REL_VIEW = 'v'
-REL_MATERIALIZED_VIEW = 'm'
-REL_COMPOSITE_TYPE = 'c'
-REL_TOAST_TABLE = 't'
-REL_FOREIGN_TABLE = 'f'
+REL_TABLE = "r"
+REL_INDEX = "i"
+REL_SEQUENCE = "S"
+REL_VIEW = "v"
+REL_MATERIALIZED_VIEW = "m"
+REL_COMPOSITE_TYPE = "c"
+REL_TOAST_TABLE = "t"
+REL_FOREIGN_TABLE = "f"
 
-VERSION_SCHEMA = 'public'
+VERSION_SCHEMA = "public"
 
-VERSION_TABLE = 'ipmt_version'
+VERSION_TABLE = "ipmt_version"
 
-OPS_SCHEMA = 'public'
+OPS_SCHEMA = "public"
 
-OPS_TABLE = 'ipmt_ops'
+OPS_TABLE = "ipmt_ops"
 
 SQL_OPS_TABLE_EXISTS = """\
 SELECT EXISTS (
@@ -35,7 +35,10 @@ SELECT EXISTS (
     AND    c.relname = '%s'
     AND    c.relkind = 'r'
 )
-""" % (OPS_SCHEMA, OPS_TABLE)
+""" % (
+    OPS_SCHEMA,
+    OPS_TABLE,
+)
 
 SQL_VERSION_TABLE_EXISTS = """\
 SELECT EXISTS (
@@ -46,7 +49,10 @@ SELECT EXISTS (
     AND    c.relname = '%s'
     AND    c.relkind = 'r'
 )
-""" % (VERSION_SCHEMA, VERSION_TABLE)
+""" % (
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+)
 
 SQL_OPS_CREATE = """\
 CREATE TABLE %s.%s(
@@ -56,7 +62,10 @@ CREATE TABLE %s.%s(
     new_version text,
     stamp timestamptz NOT NULL DEFAULT NOW()
 )
-""" % (OPS_SCHEMA, OPS_TABLE)
+""" % (
+    OPS_SCHEMA,
+    OPS_TABLE,
+)
 
 SQL_VERSION_CREATE = """\
 CREATE TABLE %s.%s(
@@ -64,18 +73,29 @@ CREATE TABLE %s.%s(
     history text[] NOT NULL
 );
 CREATE UNIQUE INDEX ON %s.%s((version IS NOT NULL));
-""" % (VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE)
+""" % (
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+)
 
 GP_SQL_VERSION_CREATE = """\
 CREATE TABLE %s.%s(
     version text NOT NULL PRIMARY KEY,
     history text[] NOT NULL
 );
-""" % (VERSION_SCHEMA, VERSION_TABLE)
+""" % (
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+)
 
 SQL_VERSION_CURRENT = """\
 SELECT version FROM %s.%s
-""" % (VERSION_SCHEMA, VERSION_TABLE)
+""" % (
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+)
 
 # SQL_VERSION_SET = """\
 # WITH del AS (DELETE FROM {}.{} RETURNING history)
@@ -94,8 +114,14 @@ BEGIN
     INSERT INTO {}.{}(version, history)
     VALUES (%(version)s, _history || ARRAY[]::text[]);
 END$$
-""".format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE,
-           VERSION_SCHEMA, VERSION_TABLE)
+""".format(
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+)
 
 # SQL_VERSION_UP = """\
 # WITH del AS (DELETE FROM {}.{} RETURNING history)
@@ -114,8 +140,14 @@ BEGIN
     INSERT INTO {}.{}(version, history)
     VALUES (%(version)s, _history || ARRAY[%(version)s]);
 END$$
-""".format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE,
-           VERSION_SCHEMA, VERSION_TABLE)
+""".format(
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+)
 
 # SQL_VERSION_DOWN = """\
 # WITH del AS (DELETE FROM {}.{} RETURNING history)
@@ -137,17 +169,27 @@ BEGIN
         VALUES (%(version)s, _history[1:array_upper(_history, 1) - 1]);
     END IF;
 END$$
-""".format(VERSION_SCHEMA, VERSION_TABLE, VERSION_SCHEMA, VERSION_TABLE,
-           VERSION_SCHEMA, VERSION_TABLE)
+""".format(
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+    VERSION_SCHEMA,
+    VERSION_TABLE,
+)
 
 SQL_OPS_INSERT = """\
 INSERT INTO {}.{}(op, old_version, new_version)
 VALUES(%(op)s, %(old_version)s, %(new_version)s)
-""".format(OPS_SCHEMA, OPS_TABLE)
+""".format(
+    OPS_SCHEMA, OPS_TABLE
+)
 
 SQL_HISTORY = """\
 SELECT UNNEST(history) FROM {}.{}
-""".format(VERSION_SCHEMA, VERSION_TABLE)
+""".format(
+    VERSION_SCHEMA, VERSION_TABLE
+)
 
 SQL_DB_SCHEMAS = """\
 SELECT 'DROP SCHEMA IF EXISTS ' || quote_ident(nspname) || 'CASCADE;'
@@ -192,8 +234,9 @@ class Database(object):
         self.buffer = []
         self.dry_run = False
         host, port, user, pwd, dbname = parse_dsn(dsn)
-        self.conn = psycopg2.connect(database=dbname, user=user, password=pwd,
-                                     host=host, port=port)
+        self.conn = psycopg2.connect(
+            database=dbname, user=user, password=pwd, host=host, port=port
+        )
         self.conn.set_session(autocommit=True)
         self.cursor = self.conn.cursor()
         self._initialized = False
@@ -245,16 +288,21 @@ class Database(object):
         if object_kinds is not None:
             object_kinds_param = "{%s}" % (",".join(object_kinds),)
         else:
-            object_kinds_param = "{%s}" % (",".join((REL_TABLE, REL_INDEX,
-                                                     REL_SEQUENCE, REL_VIEW,
-                                                     REL_MATERIALIZED_VIEW,
-                                                     REL_COMPOSITE_TYPE,
-                                                     REL_TOAST_TABLE,
-                                                     REL_FOREIGN_TABLE)),)
-        params = {
-            "rel_pattern": name_pattern,
-            "rel_kind": object_kinds_param
-        }
+            object_kinds_param = "{%s}" % (
+                ",".join(
+                    (
+                        REL_TABLE,
+                        REL_INDEX,
+                        REL_SEQUENCE,
+                        REL_VIEW,
+                        REL_MATERIALIZED_VIEW,
+                        REL_COMPOSITE_TYPE,
+                        REL_TOAST_TABLE,
+                        REL_FOREIGN_TABLE,
+                    )
+                ),
+            )
+        params = {"rel_pattern": name_pattern, "rel_kind": object_kinds_param}
         return self.query_column(SQL_SERCH_OBJECTS, params)
 
     def execute(self, sql, params=None):
@@ -304,8 +352,9 @@ class Database(object):
             logging.debug("Creating table %s.%s" % (OPS_SCHEMA, OPS_TABLE))
             self._execute_unlogged(SQL_OPS_CREATE)
         if not self._query_scalar_unlogged(SQL_VERSION_TABLE_EXISTS):
-            logging.debug("Creating table %s.%s" % (VERSION_SCHEMA,
-                                                    VERSION_TABLE))
+            logging.debug(
+                "Creating table %s.%s" % (VERSION_SCHEMA, VERSION_TABLE)
+            )
 
             if self.is_greenplum:
                 self._execute_unlogged(GP_SQL_VERSION_CREATE)
@@ -313,14 +362,15 @@ class Database(object):
                 self._execute_unlogged(SQL_VERSION_CREATE)
 
     def ops_add(self, op, old_version, new_version):
-        if op not in ('up', 'down'):
-            raise DbError('Invalid operation %s' % op)
-        self._execute_unlogged(SQL_OPS_INSERT,
-                               {"op": op, "old_version": old_version,
-                                "new_version": new_version})
-        if op == 'up':
+        if op not in ("up", "down"):
+            raise DbError("Invalid operation %s" % op)
+        self._execute_unlogged(
+            SQL_OPS_INSERT,
+            {"op": op, "old_version": old_version, "new_version": new_version},
+        )
+        if op == "up":
             self._execute_unlogged(SQL_VERSION_UP, {"version": new_version})
-        elif op == 'down':
+        elif op == "down":
             self._execute_unlogged(SQL_VERSION_DOWN, {"version": new_version})
 
 
@@ -329,8 +379,8 @@ def transactional(isolation_level=None):
         def wrapper(*args, **kwargs):
             if len(args) > 0:
                 db = args[0]
-            elif 'db' in kwargs:
-                db = kwargs['db']
+            elif "db" in kwargs:
+                db = kwargs["db"]
             else:
                 raise Exception()
             if db.in_transaction:
@@ -339,36 +389,34 @@ def transactional(isolation_level=None):
                 with Transaction(db):
                     return fn(*args, **kwargs)
 
-        wrapper.__transactional__ = (isolation_level or
-                                     READ_COMMITTED)
+        wrapper.__transactional__ = isolation_level or READ_COMMITTED
         return wrapper
 
     return decorator
 
 
 class Transaction(object):
-
     def __init__(self, db, isolation_level=None):
         self.db = db
         self.isolation_level = isolation_level or READ_COMMITTED
 
     def begin(self):
         if self.db._in_transaction:
-            raise DbError('There is already a transaction in progress')
+            raise DbError("There is already a transaction in progress")
         self.db.execute("BEGIN ISOLATION LEVEL %s;" % self.isolation_level)
         self.db._in_transaction = True
         self.db._isolation_level = self.isolation_level
 
     def commit(self):
         if not self.db._in_transaction:
-            raise DbError('There is no transaction in progress')
+            raise DbError("There is no transaction in progress")
         self.db.execute("COMMIT;")
         self.db._in_transaction = False
         self.db._isolation_level = None
 
     def rollback(self):
         if not self.db._in_transaction:
-            raise DbError('There is no transaction in progress')
+            raise DbError("There is no transaction in progress")
         self.db.execute("ROLLBACK;")
         self.db._in_transaction = False
         self.db._isolation_level = None
