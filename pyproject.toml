@@ -3,9 +3,14 @@ branch = true
 source = ["ipmt"]
 omit = ["site-packages", ".tox"]
 
+[tool.pytest.ini_options]
+addopts = "-s -v --cov --cov-report term --cov-report=html --cov-config pyproject.toml"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning:distutils"]
+
 [tool.poetry]
 name = "ipmt"
-version = "2.0a1"
+version = "2.0a2"
 description = "Schema migration tools for PostgreSQL"
 authors = ["InPlat <dev@inplat.ru>"]
 keywords = ["ipmt"]
@@ -42,6 +47,7 @@ codecov = "^2.1.10"
 coverage = {extras = ["toml"], version = "^5.3"}
 toml = "^0.10.1"
 black = "^20.8b1"
+safety = "^1.9.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
