@@ -47,7 +47,7 @@ psycopg2 = "^2.7.7"
 PyYAML = "^5.3.1"
 Jinja2 = "^2.10.1"
 Mako = "^1.0.7"
-docker = "^4.3.1"
+docker = ">=4.3.1,<6.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
