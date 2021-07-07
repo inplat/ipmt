@@ -124,8 +124,8 @@ def parse_dsn(dsn):
     unix_socket_path = None
     if parsed.query:
         query = parse_qs(parsed.query)
-        if 'host' in query:
-            unix_socket_path = query['host'][0]
+        if "host" in query:
+            unix_socket_path = query["host"][0]
 
     return [
         parsed.hostname or "localhost",
