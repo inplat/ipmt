@@ -112,7 +112,8 @@ def parse_dsn(dsn):
     """
     Разбирает строку подключения к БД и возвращает список из (host, port,
     username, password, dbname, unix_socket_path)
-    Путь к unix сокету передается так: username@:5432/dname?host=/var/run/postgresql
+    Путь к unix сокету передается так:
+    username@:5432/dname?host=/var/run/postgresql
 
     :param dsn: Строка подключения. Например: username@localhost:5432/dname
     :type: str
