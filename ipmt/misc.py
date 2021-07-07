@@ -6,7 +6,7 @@ import random
 import getpass
 import subprocess
 from importlib import machinery
-from urllib.parse import urlparse, unquote
+from urllib.parse import urlparse, unquote, parse_qs
 
 PLATFORM_IS_WINDOWS = sys.platform.lower().startswith("win")
 
@@ -111,14 +111,21 @@ def _get_pg_dump_from_registry():
 def parse_dsn(dsn):
     """
     Разбирает строку подключения к БД и возвращает список из (host, port,
-    username, password, dbname)
+    username, password, dbname, unix_socket_path)
+    Путь к unix сокету передается так: username@:5432/dname?host=/var/run/postgresql
 
     :param dsn: Строка подключения. Например: username@localhost:5432/dname
     :type: str
-    :return: [host, port, username, password, dbname]
+    :return: [host, port, username, password, dbname, unix_socket_path]
     :rtype: list
     """
     parsed = urlparse("pg://" + dsn)
+    unix_socket_path = None
+    if parsed.query:
+        query = parse_qs(parsed.query)
+        if 'host' in query:
+            unix_socket_path = query['host'][0]
+
     return [
         parsed.hostname or "localhost",
         parsed.port or 5432,
@@ -127,6 +134,7 @@ def parse_dsn(dsn):
         else getpass.getuser(),
         unquote(parsed.password) if parsed.password is not None else None,
         parsed.path.lstrip("/"),
+        unix_socket_path
     ]
 
 
@@ -139,11 +147,12 @@ def pg_dump(dsn, output):
     :type dsn: str
     :type output: str
     """
-    host, port, user, pwd, dbname = parse_dsn(dsn)
+    host, port, user, pwd, dbname, socket = parse_dsn(dsn)
+
     args = [
         autodetect_pg_dump_path(),
         "-h",
-        host,
+        socket or host,
         "-p",
         str(port),
         "-U",

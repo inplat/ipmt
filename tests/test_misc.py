@@ -19,6 +19,7 @@ def test_parse_dsn():
         "user",
         None,
         "dbname",
+        None,
     ]
     assert parse_dsn("user:pw@localhost/dbname") == [
         "localhost",
@@ -26,6 +27,7 @@ def test_parse_dsn():
         "user",
         "pw",
         "dbname",
+        None,
     ]
     assert parse_dsn("user:pw@localhost:8888/dbname") == [
         "localhost",
@@ -33,6 +35,7 @@ def test_parse_dsn():
         "user",
         "pw",
         "dbname",
+        None,
     ]
     assert parse_dsn("localhost/db") == [
         "localhost",
@@ -40,6 +43,7 @@ def test_parse_dsn():
         getpass.getuser(),
         None,
         "db",
+        None,
     ]
     assert parse_dsn("user:p%20w@localhost:8888/dbname") == [
         "localhost",
@@ -47,4 +51,13 @@ def test_parse_dsn():
         "user",
         "p w",
         "dbname",
+        None,
+    ]
+    assert parse_dsn("postgres@:5432/postgres?host=/var/run/postgresql") == [
+        "localhost",
+        5432,
+        "postgres",
+        None,
+        "postgres",
+        "/var/run/postgresql",
     ]
