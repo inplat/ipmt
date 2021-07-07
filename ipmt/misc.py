@@ -135,7 +135,7 @@ def parse_dsn(dsn):
         else getpass.getuser(),
         unquote(parsed.password) if parsed.password is not None else None,
         parsed.path.lstrip("/"),
-        unix_socket_path
+        unix_socket_path,
     ]
 
 

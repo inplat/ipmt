@@ -235,8 +235,11 @@ class Database(object):
         self.dry_run = False
         host, port, user, pwd, dbname, socket = parse_dsn(dsn)
         self.conn = psycopg2.connect(
-            database=dbname, user=user, password=pwd, host=socket or host,
-            port=port
+            database=dbname,
+            user=user,
+            password=pwd,
+            host=socket or host,
+            port=port,
         )
         self.conn.set_session(autocommit=True)
         self.cursor = self.conn.cursor()
