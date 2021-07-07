@@ -71,12 +71,12 @@ def _create_postgres_like_container(request):
 def postgres(request):
     yield from _create_postgres_like_container(request)
 
-
-@pytest.fixture(
-    params=[("pivotaldata/gpdb-dev", "ubuntu-16.04", "gpadmin", "postgres")]
-)
-def greenplum(request):
-    yield from _create_postgres_like_container(request)
+#
+# @pytest.fixture(
+#     params=[("pivotaldata/gpdb-dev", "ubuntu-16.04", "gpadmin", "postgres")]
+# )
+# def greenplum(request):
+#     yield from _create_postgres_like_container(request)
 
 
 @pytest.fixture()
