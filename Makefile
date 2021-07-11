@@ -50,7 +50,7 @@ venv: ## Create virtualenv directory and install all requirements
 ifeq ($(VENV_EXISTS), 1)
 	@echo virtual env already initialized
 else
-	virtualenv -p python3 .venv
+	virtualenv -p python3.6 .venv
 	poetry install
 endif
 
