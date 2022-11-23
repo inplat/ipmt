@@ -34,7 +34,6 @@ clean-venv:
 clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
-	rm -fr .tox
 	rm -fr .cache
 
 .PHONY: clean-build
@@ -59,12 +58,8 @@ lint: venv ## check style with flake8
 	poetry run flake8 --exclude=ipmt/compat.py ipmt tests
 
 .PHONY: test
-test: venv lint ## run tests with tox
+test: venv lint ## run tests
 	poetry run pytest -v -s
-
-.PHONY: test-all
-test-all: venv ## run tests with tox
-	poetry run tox
 
 .PHONY: coverage
 coverage-quiet: venv ## check code coverage

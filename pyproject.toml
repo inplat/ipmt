@@ -15,7 +15,7 @@ exclude = '''
 [tool.coverage.run]
 branch = true
 source = ["ipmt"]
-omit = ["site-packages", ".tox"]
+omit = ["site-packages"]
 
 [tool.pytest.ini_options]
 addopts = "-s -v --cov --cov-report term --cov-report=html --cov-config pyproject.toml"
@@ -56,7 +56,6 @@ mock = "^4.0.2"
 flake8 = "^5.0.4"
 pytest-cov = "^2.6.0"
 watchdog = "^0.10.3"
-tox = "^3.27.1"
 codecov = "^2.1.10"
 coverage = {extras = ["toml"], version = "^5.3"}
 toml = "^0.10.1"
