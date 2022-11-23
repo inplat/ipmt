@@ -53,7 +53,6 @@ jobs:
         poetry install -v
     - run: poetry check
     - run: poetry run black --check .
-    - run: poetry run safety check
     - run: poetry run flake8 ipmt tests
 
   publish:
