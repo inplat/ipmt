@@ -57,7 +57,7 @@ flake8 = "^5.0.4"
 pytest-cov = "^2.6.0"
 watchdog = "^0.10.3"
 codecov = "^2.1.10"
-coverage = {extras = ["toml"], version = "^5.3"}
+coverage = {extras = ["toml"], version = "^6.5"}
 toml = "^0.10.1"
 black = "^22.10.0"
 Sphinx = "^4.3.2"
