@@ -45,7 +45,7 @@ ipmt = 'ipmt.cli:main'
 python = "^3.7"
 psycopg2 = "^2.9.1"
 Jinja2 = "^3.0.1"
-PyYAML = "^5.4.1"
+PyYAML = ">=5.4.1,<7.0.0"
 Mako = "^1.1.4"
 docker = "^5.0.0"
 
