@@ -59,7 +59,7 @@ watchdog = "^0.10.3"
 codecov = "^2.1.10"
 coverage = {extras = ["toml"], version = "^5.3"}
 toml = "^0.10.1"
-black = "^22.10.0"
+black = "^23.1.0"
 Sphinx = "^4.3.2"
 
 [build-system]
