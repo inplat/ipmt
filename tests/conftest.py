@@ -66,6 +66,7 @@ def _create_postgres_like_container(request):
         ("postgres", "9.5", "postgres", "postgres"),
         ("postgres", "9.6", "postgres", "postgres"),
         ("postgres", "10.1", "postgres", "postgres"),
+        ("postgres", "12", "postgres", "postgres"),
     ]
 )
 def postgres(request):

@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 79
-target_version = ['py37', 'py38']
+target_version = ['py37', 'py38', 'py39', 'py310', 'py311']
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -24,7 +24,7 @@ filterwarnings = ["ignore::DeprecationWarning:distutils"]
 
 [tool.poetry]
 name = "ipmt"
-version = "2.1"
+version = "2.2"
 description = "Schema migration tools for PostgreSQL"
 authors = ["InPlat <dev@inplat.ru>"]
 keywords = ["ipmt"]
@@ -45,9 +45,9 @@ ipmt = 'ipmt.cli:main'
 python = "^3.7"
 psycopg2 = "^2.9.1"
 Jinja2 = "^3.0.1"
-PyYAML = "^5.4.1"
+PyYAML = "^6.0.1"
 Mako = "^1.1.4"
-docker = "^5.0.0"
+docker = "^6.1.3"
 
 
 [tool.poetry.dev-dependencies]
@@ -63,5 +63,5 @@ black = "^22.10.0"
 Sphinx = "^4.3.2"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.4.0"]
 build-backend = "poetry.core.masonry.api"
