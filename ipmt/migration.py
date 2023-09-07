@@ -106,7 +106,7 @@ class Repository(object):
         filename = os.path.join(self.path, "meta.yml")
         if os.path.exists(filename):
             with io.open(filename, "r", encoding="UTF8") as f:
-                self._meta = yaml.load(f.read())
+                self._meta = yaml.full_load(f.read())
         return self._meta
 
     @meta.setter
